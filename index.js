@@ -1,16 +1,12 @@
-const robots = {
-  input: require('./robots/input.js'),
-  text: require('./robots/text.js'),
-  state: require('./robots/state.js')
-}
+const state = require('./core/state')
+const { askQuestions } = require('./core/input')
+const { produceText }  = require('./core/text')
 
 async function start() {
-  robots.input()
-  await robots.text()
+  const content = await Promise.resolve(askQuestions())
+    .then(produceText)
 
-    return (response.toUpperCase() === 'I') ?  await askAndReturnClassifiedImage() : response
-  const content = robots.state.load()
-  console.dir(content, { depth: null })
+  console.log(JSON.stringify(content, null, 4))
 }
 
 start();

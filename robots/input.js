@@ -1,49 +1,87 @@
 const readlineSync = require('readline-sync')
+const prompts = require('prompts')  
 const state = require('./state.js')
 const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('./google-trends')
 const { getImbdTrends } = require('./imdb')
 
+const Suggestions = {
+  GOOGLE_TRENDS_API: 'Google Trends(API)',
+  GOOGLE_TRENDS_RSS: 'Google Trends(RSS)',
+  IMDB_TRENDS: 'IMDB trends',
+  WIKIPEDIA: 'Wikipedia'
+}
+
 function robot() {
   const content = {
     maximumSentences: 7,
-    searchTerm: askAndReturnSearchTerm(),
-    prefix: askAndReturnPrefix()
+    ...askAndReturnAnswers()
   }
   state.save(content)
 }
 
-async function askAndReturnSearchTerm () {
-  const response = readlineSync.question(
-`Type a Wikipedia search term OR: 
-[G] to fetch Google trends from API
-[GR] to fetch Google trends from RSS
-[I] to fetch IMDB trends 
-`
-  )
-  console.log('Please Wait...')
-  switch(response.trim().toUpperCase()) {
-    case 'G': 
-      return askAndReturnOption('Google trend', await getGoogleTrendsFromApi())
-    case 'GR': 
-      return askAndReturnOption('Google trend', await getGoogleTrendsFromRss())
-    case 'I':
-      return askAndReturnOption('IMDB trend', await getImbdTrends())
-    default:
-      return response
+async function askAndReturnAnswers() {
+  const { suggestionType } = await askQuestions({
+    type: 'select',
+    name: 'suggestionType',
+    message: 'Choose one search term:',
+    choices: Object.values(Suggestions),
+    validate: isValidString
+  })
+  const suggestions = suggestSearchTerms(suggestionType)
+  let searchTerm
+  if (suggestions.length) {
+    const answer = await askQuestions({
+      type: 'select',
+      name: 'searchTerm',
+      message: 'Choose one search term:',
+      choices: suggestions,
+      validate: isValidString
+    })
+    searchTerm = answer.searchTerm
+  }
+  else {
+    const searchTerm = readlineSync.question('Type a Wikipedia search term: ')
+    if (!isValidString(searchTerm)) throw new Error(`Invalid Wikipedia search term`)
+  }
+  const { prefix } = askQuestions({
+    type: 'select',
+    name: 'prefix',
+    message: 'Choose one option:',
+    choices: ['Who is', 'What is', 'The history of'],
+    validate: isValidString
+  })
+  return {
+    searchTerm,
+    prefix
   }
 }
 
-function askAndReturnPrefix() {
-  const prefixes = ['Who is', 'What is', 'The history of']
-  const selectedPrefixIndex = readlineSync.keyInSelect(prefixes, 'Choose one option: ')
-  const selectedPrefixText = prefixes[selectedPrefixIndex]
-
-  return selectedPrefixText
+async function askQuestions(...questions) {
+  return new Promise((resolve, reject) => {
+    const promptOptions = {
+      onCancel: () => reject(new Error('The user has stopped answering'))
+    }
+    prompts(questions, promptOptions)
+      .then(resolve)
+  })
 }
 
-function askAndReturnOption(optionType, suggestions) {
-  const choice = readlineSync.keyInSelect(suggestions, `Choose your ${optionType}:`)
-  return suggestions[choice]
+function isValidString(any) {
+  return typeof any === 'string' ? any.trim() !== '' : false 
+}
+
+async function suggestSearchTerms(suggestionType) {
+  switch(suggestionType.trim()) {
+    case Suggestions.GOOGLE_TRENDS_API: 
+      return await getGoogleTrendsFromApi()
+    case Suggestions.GOOGLE_TRENDS_RSS: 
+      return await getGoogleTrendsFromRss()
+    case Suggestions.IMDB_TRENDS:
+      return await getImbdTrends()
+    default:
+    case Suggestions.WIKIPEDIA:
+      return []
+  }
 }
 
 module.exports = robot

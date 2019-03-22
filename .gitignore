@@ -63,8 +63,8 @@ typings/
 # credentials
 credentials/*.json
 
-content.json
 
 # Intellij Idea
 # webstorm ide files
 .idea
+content.json

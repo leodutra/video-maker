@@ -4,7 +4,13 @@
   "description": "Projeto open source para fazer vídeos automatizados",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build-win": "pkg -t node11-win-x64 index.js",
+    "build-mac": "pkg -t node11-macos-x64 index.js",
+    "build-linux": "pkg -t node11-linux-x64 index.js",
+    "build-win-x86": "pkg -t node11-win-x86 index.js",
+    "build-mac-x86": "pkg -t node11-macos-x86 index.js",
+    "build-linux-x86": "pkg -t node11-linux-x86 index.js"
   },
   "repository": {
     "type": "git",
@@ -32,6 +38,7 @@
     "eslint": "^5.15.3",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-jest": "^22.4.1",
-    "jest": "^24.5.0"
+    "jest": "^24.5.0",
+    "pkg": "^4.3.7"
   }
 }

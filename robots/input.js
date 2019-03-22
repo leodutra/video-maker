@@ -1,6 +1,6 @@
-const readline = require('readline-sync')
+const readlineSync = require('readline-sync')
 const state = require('./state.js')
-const { getGoogleTrends } = require('./google-trends')
+const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('./google-trends')
 const { getImbdTrends } = require('./imdb')
 
 function robot() {
@@ -13,17 +13,21 @@ function robot() {
 }
 
 async function askAndReturnSearchTerm () {
-  const response = readline.question(
+  const response = readlineSync.question(
 `Type a Wikipedia search term OR: 
-[G] to fetch Google trends 
+[G] to fetch Google trends from API
+[GR] to fetch Google trends from RSS
 [I] to fetch IMDB trends 
 `
   )
+  console.log('Please Wait...')
   switch(response.trim().toUpperCase()) {
     case 'G': 
-      return askAndReturnTrend(getGoogleTrends)
+      return askAndReturnOption('Google trend', await getGoogleTrendsFromApi())
+    case 'GR': 
+      return askAndReturnOption('Google trend', await getGoogleTrendsFromRss())
     case 'I':
-      return askAndReturnTrend(getImbdTrends)
+      return askAndReturnOption('IMDB trend', await getImbdTrends())
     default:
       return response
   }
@@ -31,18 +35,15 @@ async function askAndReturnSearchTerm () {
 
 function askAndReturnPrefix() {
   const prefixes = ['Who is', 'What is', 'The history of']
-  const selectedPrefixIndex = readline.keyInSelect(prefixes, 'Choose one option: ')
+  const selectedPrefixIndex = readlineSync.keyInSelect(prefixes, 'Choose one option: ')
   const selectedPrefixText = prefixes[selectedPrefixIndex]
 
   return selectedPrefixText
 }
 
-async function askAndReturnTrend(suggestionGetter) {
-  console.log('Please Wait...')
-  const trends = await suggestionGetter()
-  const choice = readline.keyInSelect(trends, 'Choose your trend:')
-
-  return trends[choice]
+function askAndReturnOption(optionType, suggestions) {
+  const choice = readlineSync.keyInSelect(suggestions, `Choose your ${optionType}:`)
+  return suggestions[choice]
 }
 
 module.exports = robot

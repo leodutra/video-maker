@@ -24,3 +24,13 @@ File: `watson-nlu.json`
   "url": "https://gateway.watsonplatform.net/natural-language-understanding/api"
 }
 ```
+
+## Watson Image Classifier
+File: `watson-classifier.json`
+
+```
+{
+  "apiKey": "xxxxxxxxxx"
+}
+```
+

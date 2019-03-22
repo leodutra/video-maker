@@ -8,6 +8,7 @@ async function start() {
   robots.input()
   await robots.text()
 
+    return (response.toUpperCase() === 'I') ?  await askAndReturnClassifiedImage() : response
   const content = robots.state.load()
   console.dir(content, { depth: null })
 }

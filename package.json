@@ -22,6 +22,8 @@
     "imdb-scrapper": "^2.2.0",
     "prompts": "^2.0.4",
     "readline-sync": "^1.4.9",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
     "rss-parser": "^3.6.2",
     "sbd": "^1.0.14",
     "watson-developer-cloud": "^3.18.2"

@@ -18,9 +18,10 @@
   "homepage": "https://github.com/filipedeschamps/video-maker#readme",
   "dependencies": {
     "algorithmia": "^0.3.10",
+    "imdb-scrapper": "^2.2.0",
     "readline-sync": "^1.4.9",
+    "rss-parser": "^3.6.2",
     "sbd": "^1.0.14",
-    "watson-developer-cloud": "^3.18.2",
-    "rss-parser": "^3.6.2"
+    "watson-developer-cloud": "^3.18.2"
   }
 }

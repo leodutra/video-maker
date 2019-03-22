@@ -1,6 +1,7 @@
 const readline = require('readline-sync')
 const state = require('./state.js')
-const { askAndReturnTrend } = require('./google-trends')
+const { getGoogleTrends } = require('./google-trends')
+const { getImbdTrends } = require('./imdb')
 
 function robot() {
   const content = {
@@ -12,8 +13,20 @@ function robot() {
 }
 
 async function askAndReturnSearchTerm () {
-  const response = readline.question('Type a Wikipedia search term or G to fetch google trends: ')
-  return response.toUpperCase() === 'G' ?  await askAndReturnTrend() : response
+  const response = readline.question(
+`Type a Wikipedia search term OR: 
+[G] to fetch Google trends 
+[I] to fetch IMDB trends 
+`
+  )
+  switch(response.trim().toUpperCase()) {
+    case 'G': 
+      return askAndReturnTrend(getGoogleTrends)
+    case 'I':
+      return askAndReturnTrend(getImbdTrends)
+    default:
+      return response
+  }
 }
 
 function askAndReturnPrefix() {
@@ -22,6 +35,14 @@ function askAndReturnPrefix() {
   const selectedPrefixText = prefixes[selectedPrefixIndex]
 
   return selectedPrefixText
+}
+
+async function askAndReturnTrend(suggestionGetter) {
+  console.log('Please Wait...')
+  const trends = await suggestionGetter()
+  const choice = readline.keyInSelect(trends, 'Choose your trend:')
+
+  return trends[choice]
 }
 
 module.exports = robot

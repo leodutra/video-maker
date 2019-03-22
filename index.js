@@ -12,4 +12,4 @@ async function start() {
   console.dir(content, { depth: null })
 }
 
-start()
+start();

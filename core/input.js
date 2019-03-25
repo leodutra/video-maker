@@ -14,9 +14,10 @@ const Suggestion = {
 }
 
 async function askQuestions() {
+  const { searchTerm, prefix } = await askAndReturnAnswers()
   return {
-    maximumSentences: 7,
-    ...await askAndReturnAnswers()
+    searchTerm,
+    prefix
   }
 }
 
@@ -25,7 +26,7 @@ async function askAndReturnAnswers() {
     type: 'select',
     name: 'searchType',
     message: 'Choose one search type:',
-    choices: valuesToChoice(Suggestion),
+    choices: toPromptChoice(Suggestion),
     validate: isValidString
   })
   const suggestions = await suggestSearchTerms(searchType)
@@ -35,22 +36,22 @@ async function askAndReturnAnswers() {
       type: 'select',
       name: 'searchTerm',
       message: 'Choose one search term:',
-      choices: valuesToChoice(suggestions),
+      choices: toPromptChoice(suggestions),
       validate: isValidString
     })
   }
   else {
     switch (searchType) {
       case Suggestion.IMAGE: // WATSON
-        const imagePath = readline.question('Type the image path: ')
+        const imagePath = readlineSync.question('Type the image path: ')
         searchTerm = await classifyImage(imagePath)
         break
       default: // WIKIPEDIA
         searchTerm = readlineSync.question(`Type a ${searchType} term: `)
         if (!isValidString(searchTerm)) throw new Error(`Invalid ${searchType} search term`)
         console.log('Searching possible Wikipedia pages...')
-        const pageSuggestions = searchPagesByApi(searchTerm)
-        searchTerm = readline.keyInSelect(pageSuggestions.map(x => x.title),'Choose if any of these keys is the desired search: ')
+        const pageSuggestions = await searchPagesByApi(searchTerm)
+        searchTerm = readlineSync.keyInSelect(pageSuggestions.map(x => x.title),'Choose if any of these keys is the desired search: ')
         break
     }
   }
@@ -58,7 +59,7 @@ async function askAndReturnAnswers() {
     type: 'select',
     name: 'prefix',
     message: 'Choose one option:',
-    choices: valuesToChoice(['Who is', 'What is', 'The history of']),
+    choices: toPromptChoice(['Who is', 'What is', 'The history of']),
     validate: isValidString
   })
   return {
@@ -94,7 +95,7 @@ async function suggestSearchTerms(suggestionType) {
   }
 }
 
-function valuesToChoice(obj) {
+function toPromptChoice(obj) {
   return Object.values(obj).map( x => ({ title: x, value: x}))
 }
 

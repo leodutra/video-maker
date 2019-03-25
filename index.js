@@ -1,12 +1,17 @@
 const state = require('./core/state')
 const { askQuestions } = require('./core/input')
 const { produceText }  = require('./core/text')
+const { searchTextImages }  = require('./core/image')
 
 async function start() {
-  const content = await Promise.resolve(askQuestions())
-    .then(produceText)
+  const {
+    searchTerm,
+    prefix
+  } = await askQuestions()
+  const sentences = await produceText({ searchTerm, maxSentences: 7 })
+  const hypertext = await searchTextImages({ searchTerm, sentences })
 
-  console.log(JSON.stringify(content, null, 4))
+  console.log(JSON.stringify(hypertext, null, 4))
 }
 
 start();

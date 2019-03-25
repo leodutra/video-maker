@@ -20,17 +20,17 @@ function sanitizeContent(content) {
 function removeBlankLinesAndMarkdown(text) {
   const allLines = text.split('\n')
   const withoutBlankLinesAndMarkdown = allLines.filter(
-    line => line.trim() && !line.trim().startsWith('=') 
+    line => line.trim() && !line.trim().startsWith('=')
   )
   return withoutBlankLinesAndMarkdown.join(' ')
 }
 
 function removeDatesInParentheses(text) {
-  return text.replace(/\((?:\([^()]*\)|[^()])*\)/gm, '').replace(/\s{2,}/g,' ')
+  return text.replace(/\((?:\([^()]*\)|[^()])*\)/gm, '').replace(/\s{2,}/g, ' ')
 }
 
 function breakContentIntoSentences(content) {
-  const sentences = sentenceBoundaryDetection.sentences(content.sourceContentSanitized)
+  const sentences = sentenceBoundaryDetection.sentences(content)
   return sentences.map(sentence => (
     {
       text: sentence,
@@ -44,10 +44,13 @@ function limitMaximumSentences(max) {
   return sentences => sentences.slice(0, max)
 }
 
-async function fetchKeywordsOfAllSentences(content) {
-  await Promise.all(
-    content.sentences.map(
-      async sentence => sentence.keywords = await fetchWatsonKeywords(sentence.text)
+async function fetchKeywordsOfAllSentences(sentences) {
+  return Promise.all(
+    sentences.map(
+      async sentence => ({
+        keywords: await fetchWatsonKeywords(sentence.text),
+        ...sentence
+      })
     )
   )
 }

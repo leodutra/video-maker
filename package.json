@@ -28,6 +28,7 @@
     "imdb-scrapper": "^2.2.0",
     "jsonpath": "^1.0.1",
     "prompts": "^2.0.4",
+    "googleapis": "^38.0.0",
     "readline-sync": "^1.4.9",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",

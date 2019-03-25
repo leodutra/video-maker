@@ -1,6 +1,7 @@
 const readlineSync = require('readline-sync')
 const prompts = require('prompts')
 const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('../apis/google-trends')
+const { searchPagesByApi, fetchDataByApi } = require('../apis/wikipedia')
 const { getImbdTrends } = require('../apis/imdb')
 const { classifyImage } = require('../apis/watson-visual-recognition')
 
@@ -40,14 +41,16 @@ async function askAndReturnAnswers() {
   }
   else {
     switch (searchType) {
-      case Suggestion.IMAGE:
+      case Suggestion.IMAGE: // WATSON
         const imagePath = readline.question('Type the image path: ')
         searchTerm = await classifyImage(imagePath)
         break
-
-      default:
+      default: // WIKIPEDIA
         searchTerm = readlineSync.question(`Type a ${searchType} term: `)
         if (!isValidString(searchTerm)) throw new Error(`Invalid ${searchType} search term`)
+        console.log('Searching possible Wikipedia pages...')
+        const pageSuggestions = searchPagesByApi(searchTerm)
+        searchTerm = readline.keyInSelect(pageSuggestions.map(x => x.title),'Choose if any of these keys is the desired search: ')
         break
     }
   }

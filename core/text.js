@@ -1,10 +1,11 @@
-const { fetchContentFromWikipedia } = require('../apis/wikipedia')
+const { searchContentByAlgorithmia, fetchContentByApi } = require('../apis/wikipedia')
 const sentenceBoundaryDetection = require('sbd')
 const { fetchWatsonKeywords } = require('../apis/watson-natural-language-understanding')
 
 async function produceText({ searchTerm, maxSentences }) {
   return Promise.resolve(searchTerm)
-    .then(fetchContentFromWikipedia)
+    //.then(searchContentByAlgorithmia)
+    .then(fetchContentByApi)
     .then(sanitizeContent)
     .then(breakContentIntoSentences)
     .then(limitMaximumSentences(maxSentences))

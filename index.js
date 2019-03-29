@@ -1,7 +1,7 @@
 const state = require('./core/state')
-const { askQuestions } = require('./core/input')
-const { produceText }  = require('./core/text')
-const { searchTextImages }  = require('./core/image')
+const { askQuestions } = require('./core/input-flow')
+const { produceText }  = require('./core/text-flow')
+const { produceImages }  = require('./core/image-flow')
 
 async function start() {
   const {
@@ -9,7 +9,7 @@ async function start() {
     prefix
   } = await askQuestions()
   const sentences = await produceText({ searchTerm, maxSentences: 7 })
-  const hypertext = await searchTextImages({ searchTerm, sentences })
+  const hypertext = await produceImages({ searchTerm, sentences })
 
   console.log(JSON.stringify(hypertext, null, 4))
 }

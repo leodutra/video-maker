@@ -3,6 +3,14 @@ const jsonpath = require('jsonpath')
 
 const ALGORITHMIA_API_KEY = require('../credentials/algorithmia.json').apiKey
 
+module.exports = {
+    searchDataByAlgorithmia,
+    searchContentByAlgorithmia,
+    searchPagesByApi,
+    fetchDataByApi,
+    fetchContentByApi
+}
+
 async function searchDataByAlgorithmia(searchTerm) {
     const algorithmiaAuthenticated = algorithmia(ALGORITHMIA_API_KEY)
     const wikipediaAlgorithm = algorithmiaAuthenticated.algo('web/WikipediaParser/0.1.2')
@@ -76,10 +84,3 @@ async function getURLImage(title){
     return jsonpath.value(response.body, '$.query.pages..imageinfo[0].url')
 }
 
-module.exports = {
-    searchDataByAlgorithmia,
-    searchContentByAlgorithmia,
-    searchPagesByApi,
-    fetchDataByApi,
-    fetchContentByApi
-}

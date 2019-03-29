@@ -3,7 +3,11 @@ const customSearch = google.customsearch('v1')
 
 const googleSearchCredentials = require('../credentials/google-search.json')
 
-async function searchImages(query, limit = 2) {
+module.exports = {
+    searchImages
+}
+
+async function searchImages({ query, limit = 2 }) {
     const response = await customSearch.cse.list({
         auth: googleSearchCredentials.apiKey,
         cx: googleSearchCredentials.searchEngineId,
@@ -14,6 +18,3 @@ async function searchImages(query, limit = 2) {
     return response.data.items
 }
 
-module.exports = {
-    searchImages
-}

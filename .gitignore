@@ -63,8 +63,10 @@ typings/
 # credentials
 credentials/*.json
 
-
 # Intellij Idea
 # webstorm ide files
 .idea
 content.json
+
+content/*
+.DS_Store

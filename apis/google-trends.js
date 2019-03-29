@@ -1,7 +1,12 @@
 const googleTrends = require('google-trends-api')
 const RssParser = require('rss-parser')
 
-const TREND_RSS_URL = 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=BR' 
+const TREND_RSS_URL = 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=BR'
+
+module.exports = {
+  getGoogleTrendsFromRss,
+  getGoogleTrendsFromApi
+}
 
 async function getGoogleTrendsFromRss(maxCount = 10) {
   const rssParser = new RssParser()
@@ -22,7 +27,3 @@ async function getGoogleTrendsFromApi(maxCount) {
     .slice(0, maxCount - 1 || 1)
 }
 
-module.exports = {
-  getGoogleTrendsFromRss,
-  getGoogleTrendsFromApi
-}

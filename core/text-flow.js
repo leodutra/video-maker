@@ -2,7 +2,12 @@ const { searchContentByAlgorithmia, fetchContentByApi } = require('../apis/wikip
 const sentenceBoundaryDetection = require('sbd')
 const { fetchWatsonKeywords } = require('../apis/watson-natural-language-understanding')
 
+module.exports = {
+  produceText
+}
+
 async function produceText({ searchTerm, maxSentences }) {
+  console.log(`Producing text content for the search term "${searchTerm}"...`)
   return Promise.resolve(searchTerm)
     //.then(searchContentByAlgorithmia)
     .then(fetchContentByApi)
@@ -13,6 +18,7 @@ async function produceText({ searchTerm, maxSentences }) {
 }
 
 function sanitizeContent(content) {
+  console.log(`Sanitizing content...`)
   content = removeBlankLinesAndMarkdown(content)
   return removeDatesInParentheses(content)
 }
@@ -30,6 +36,7 @@ function removeDatesInParentheses(text) {
 }
 
 function breakContentIntoSentences(content) {
+  console.log(`Breaking content into sentences...`)
   const sentences = sentenceBoundaryDetection.sentences(content)
   return sentences.map(sentence => (
     {
@@ -48,13 +55,9 @@ async function fetchKeywordsOfAllSentences(sentences) {
   return Promise.all(
     sentences.map(
       async sentence => ({
-        keywords: await fetchWatsonKeywords(sentence.text),
-        ...sentence
+        ...sentence,
+        keywords: await fetchWatsonKeywords(sentence.text)
       })
     )
   )
-}
-
-module.exports = {
-  produceText
 }

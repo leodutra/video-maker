@@ -13,6 +13,10 @@ const Suggestion = {
   WIKIPEDIA: 'Wikipedia'
 }
 
+module.exports = {
+  askQuestions
+}
+
 async function askQuestions() {
   const { searchTerm, prefix } = await askAndReturnAnswers()
   return {
@@ -29,7 +33,7 @@ async function askAndReturnAnswers() {
     choices: toPromptChoice(Suggestion),
     validate: isValidString
   })
-  const suggestions = await suggestSearchTerms(searchType)
+  let suggestions = await suggestSearchTerms(searchType)
   let searchTerm
   if (suggestions.length) {
     const answer = await question({
@@ -49,9 +53,11 @@ async function askAndReturnAnswers() {
       default: // WIKIPEDIA
         searchTerm = readlineSync.question(`Type a ${searchType} term: `)
         if (!isValidString(searchTerm)) throw new Error(`Invalid ${searchType} search term`)
-        console.log('Searching possible Wikipedia pages...')
+        console.log(`Searching possible Wikipedia pages for "${searchTerm}"...`)
         const pageSuggestions = await searchPagesByApi(searchTerm)
-        searchTerm = readlineSync.keyInSelect(pageSuggestions.map(x => x.title),'Choose if any of these keys is the desired search: ')
+        console.log(`Found page suggestions: `)
+        suggestions = pageSuggestions.map(x => x.title)
+        searchTerm = suggestions[readlineSync.keyInSelect(suggestions, 'Choose if any of these keys is the desired search: ')]
         break
     }
   }
@@ -97,8 +103,4 @@ async function suggestSearchTerms(suggestionType) {
 
 function toPromptChoice(obj) {
   return Object.values(obj).map( x => ({ title: x, value: x}))
-}
-
-module.exports = {
-  askQuestions
 }

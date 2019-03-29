@@ -2,6 +2,10 @@ const watsonClassifierApiKey = require('../credentials/watson-classifier.json').
 const fs = require('fs')
 const requestPromise = require('request-promise')
 
+module.exports = {
+  classifyImage
+}
+
 async function classifyImage(imagePath) {
   const identifiedClasses = await requestWatson(imagePath)
   return identifiedClasses.images[0].classifiers[0].classes[0].class
@@ -22,6 +26,3 @@ async function requestWatson(imagePath) {
   return response
 }
 
-module.exports = {
-  classifyImage
-}

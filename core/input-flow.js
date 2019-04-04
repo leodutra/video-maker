@@ -36,13 +36,13 @@ async function askAndReturnAnswers() {
   let suggestions = await suggestSearchTerms(searchType)
   let searchTerm
   if (suggestions.length) {
-    const answer = await question({
+    searchTerm = await question({
       type: 'select',
       name: 'searchTerm',
       message: 'Choose one search term:',
       choices: toPromptChoice(suggestions),
       validate: isValidString
-    })
+    }).value
   }
   else {
     switch (searchType) {
@@ -102,5 +102,5 @@ async function suggestSearchTerms(suggestionType) {
 }
 
 function toPromptChoice(obj) {
-  return Object.values(obj).map( x => ({ title: x, value: x}))
+  return Object.values(obj).map( x => ({ title: x, value: x }))
 }

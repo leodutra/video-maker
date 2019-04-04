@@ -26,7 +26,7 @@ function sanitizeContent(content) {
 function removeBlankLinesAndMarkdown(text) {
   const allLines = text.split('\n')
   const withoutBlankLinesAndMarkdown = allLines.filter(
-    line => line.trim() && !line.trim().startsWith('=')
+    line => line.trim() && line.trim().startsWith('=') === false
   )
   return withoutBlankLinesAndMarkdown.join(' ')
 }

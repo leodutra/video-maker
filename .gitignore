@@ -68,5 +68,8 @@ credentials/*.json
 .idea
 content.json
 
+# Visual Studio Code
+.vscode
+
 content/*
 .DS_Store

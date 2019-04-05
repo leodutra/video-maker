@@ -6,11 +6,11 @@ module.exports = {
   produceText
 }
 
-async function produceText({ searchTerm, maxSentences }) {
+async function produceText({ searchTerm, maxSentences, lang }) {
   console.log(`Producing text content for the search term "${searchTerm}"...`)
   return Promise.resolve(searchTerm)
-    //.then(searchContentByAlgorithmia)
-    .then(fetchContentByApi)
+    // .then(searchTerm => searchContentByAlgorithmia(searchTerm, lang))
+    .then(searchTerm => fetchContentByApi(searchTerm, lang))
     .then(sanitizeContent)
     .then(breakContentIntoSentences)
     .then(limitMaximumSentences(maxSentences))
@@ -24,7 +24,7 @@ function sanitizeContent(content) {
 }
 
 function removeBlankLinesAndMarkdown(text) {
-  const allLines = text.split('\n')
+  const allLines = (text || '').split('\n')
   const withoutBlankLinesAndMarkdown = allLines.filter(
     line => line.trim() && line.trim().startsWith('=') === false
   )

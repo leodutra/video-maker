@@ -1,4 +1,5 @@
-const superAgent =  require('superagent');
+const algorithmia = require('algorithmia')
+const got = require('got')
 const jsonpath = require('jsonpath')
 
 const ALGORITHMIA_API_KEY = require('../credentials/algorithmia.json').apiKey
@@ -11,7 +12,12 @@ module.exports = {
     fetchContentByApi
 }
 
+function shortenLangCode(code) {
+    return code.trim().toLowerCase().split('-')[0]
+}
+
 async function searchDataByAlgorithmia(searchTerm) {
+    console.log(`Searching Wikipedia for "${searchTerm}" using Algorithmia...`)
     const algorithmiaAuthenticated = algorithmia(ALGORITHMIA_API_KEY)
     const wikipediaAlgorithm = algorithmiaAuthenticated.algo('web/WikipediaParser/0.1.2')
     const wikipediaResponse = await wikipediaAlgorithm.pipe(searchTerm)
@@ -22,13 +28,18 @@ async function searchContentByAlgorithmia(searchTerm) {
     return (await searchDataByAlgorithmia(searchTerm)).content
 }
 
-async function searchPagesByApi(searchTerm) {
-    const response = await superAgent.get('https://en.wikipedia.org/w/api.php').query({
-        action: 'opensearch',
-        search: searchTerm,
-        limit: 5,
-        namespace: 0,
-        format: 'json'
+async function searchPagesByApi(searchTerm, lang = 'en') {
+    lang = shortenLangCode(lang)
+    console.log(`Searching possible Wikipedia pages for "${searchTerm}" (${lang})...`)
+    const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
+        json: true,
+        query: {
+            action: 'opensearch',
+            search: searchTerm,
+            limit: 5,
+            namespace: 0,
+            format: 'json'
+        }
     })
     const [ searchedTerm, titles, descriptions, urls ] = response.body
     return titles.map((title, i) => ({
@@ -38,48 +49,59 @@ async function searchPagesByApi(searchTerm) {
     }))
 }
 
-async function fetchDataByApi(exactPageTitle) {
-    const response = await superAgent.get('https://en.wikipedia.org/w/api.php').query({
-        action: 'query',
-        prop: 'extracts|images|links|info|extlinks',
-        inprop: 'url',
-        redirects: 1,
-        exsectionformat: 'wiki',
-        explaintext: true,
-        titles: exactPageTitle,
-        format: "json"
+async function fetchDataByApi(exactPageTitle, lang = 'en') {
+    lang = shortenLangCode(lang)
+    console.log(`Fetching "${exactPageTitle}" Wikipedia page using Wikipedia API (${lang})...`)
+    const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
+        json: true,
+        query: {
+            action: 'query',
+            prop: 'extracts|images|links|info|extlinks',
+            inprop: 'url',
+            redirects: 1,
+            exsectionformat: 'wiki',
+            explaintext: true,
+            titles: exactPageTitle,
+            format: 'json'
+        }
     })
-    const pages = jsonpath.value(response.body, '$.query.pages')
-    const page = pages[Object.keys(pages)[0]]
-    if (!page) {
-        return null
-    }
+    const pages = Object.values(jsonpath.value(response.body, '$.query.pages'))
+    if (pages.length === 0) return null
+    const page = pages[0]
+    console.log(`${pages.length} page(s) found. The most relevant page is "${page.title}".`)
+    if (!page) return null
+    console.log(`Fetching page "${page.title}" images...`)
     return {
         pageid: page.pageid,
         title: page.title,
         content: page.extract,
-        summary: page.extract.split('\n\n\n')[0],
+        summary: (page.extract || '').split('\n\n\n')[0],
         pageLanguage: page.pageLanguage,
         url: jsonpath.value(page, '$.fullurl'),
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
         images: await Promise.all(
-            page.images.map(async x => getURLImage(x.title))
+            (page.images || []).map(async x => getURLImage(x.title, lang))
         )
     }
 }
 
-async function fetchContentByApi(exactPageTitle) {
-    return (await fetchDataByApi(exactPageTitle)).content
+async function fetchContentByApi(exactPageTitle, lang) {
+    return (await fetchDataByApi(exactPageTitle, lang)).content
 }
 
-async function getURLImage(title){
-    const response = await superAgent.get('https://en.wikipedia.org/w/api.php').query({
-        action: 'query',
-        prop: 'imageinfo',
-        titles: title,
-        format: 'json',
-        iiprop: 'url'
+async function getURLImage(title, lang = 'en'){
+    lang = shortenLangCode(lang)
+    console.log(`-\t${title} (${lang})`)
+    const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
+        json: true,
+        query: {
+            action: 'query',
+            prop: 'imageinfo',
+            titles: title,
+            format: 'json',
+            iiprop: 'url'
+        }
     })
     return jsonpath.value(response.body, '$.query.pages..imageinfo[0].url')
 }

@@ -1,94 +1,59 @@
-const readlineSync = require('readline-sync')
 const prompts = require('prompts')
 const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('../apis/google-trends')
 const { searchPagesByApi, fetchDataByApi } = require('../apis/wikipedia')
 const { getImbdTrends } = require('../apis/imdb')
 const { classifyImage } = require('../apis/watson-visual-recognition')
 
-const Suggestion = {
+const optionalLangs = Object.freeze({
+ 'Português': 'pt-BR',
+ 'English': 'en-US',
+ 'Español': 'es-ES'
+})
+
+const Suggestion = Object.freeze({
   GOOGLE_TRENDS_API: 'Google Trends(API)',
   GOOGLE_TRENDS_RSS: 'Google Trends(RSS)',
   IMDB_TRENDS: 'IMDB trends',
-  IMAGE: 'Image',
-  WIKIPEDIA: 'Wikipedia'
-}
+  WATSON_IMG_CLASSF: 'Watson - Image Classification',
+  WIKIPEDIA_SEARCH: 'Wikipedia search'
+})
 
 module.exports = {
   askQuestions
 }
 
 async function askQuestions() {
-  const { searchTerm, prefix } = await askAndReturnAnswers()
-  return {
-    searchTerm,
-    prefix
-  }
-}
-
-async function askAndReturnAnswers() {
-  let { searchType } = await question({
-    type: 'select',
-    name: 'searchType',
-    message: 'Choose one search type:',
-    choices: toPromptChoice(Suggestion),
-    validate: isValidString
-  })
-  let suggestions = await suggestSearchTerms(searchType)
+  const searchType = await askSearchType()
+  const suggestions = await suggestSearchTerms(searchType)
   let searchTerm
   if (suggestions.length) {
-    searchTerm = await question({
-      type: 'select',
-      name: 'searchTerm',
-      message: 'Choose one search term:',
-      choices: toPromptChoice(suggestions),
-      validate: isValidString
-    }).value
+    searchTerm = await askSuggestion('search term', suggestions)
   }
   else {
     switch (searchType) {
-      case Suggestion.IMAGE: // WATSON
-        const imagePath = readlineSync.question('Type the image path: ')
+      case Suggestion.WATSON_IMG_CLASSF: 
+        // Watson - Image Classification
+        const imagePath = await askImagePath(Suggestion.WATSON_IMG_CLASSF)
         searchTerm = await classifyImage(imagePath)
         break
-      default: // WIKIPEDIA
-        searchTerm = readlineSync.question(`Type a ${searchType} term: `)
-        if (!isValidString(searchTerm)) throw new Error(`Invalid ${searchType} search term`)
-        console.log(`Searching possible Wikipedia pages for "${searchTerm}"...`)
+      default: 
+      case Suggestion.WIKIPEDIA_SEARCH:
+        // Wikipedia
+        searchTerm = await askTypedSearchTerm(searchType)
         const pageSuggestions = await searchPagesByApi(searchTerm)
-        console.log(`Found page suggestions: `)
-        suggestions = pageSuggestions.map(x => x.title)
-        searchTerm = suggestions[readlineSync.keyInSelect(suggestions, 'Choose if any of these keys is the desired search: ')]
+        searchTerm = await askSuggestion('Wikipedia page', pageSuggestions.map(x => x.title))
         break
     }
   }
-  const { prefix } = await question({
-    type: 'select',
-    name: 'prefix',
-    message: 'Choose one option:',
-    choices: toPromptChoice(['Who is', 'What is', 'The history of']),
-    validate: isValidString
-  })
   return {
     searchTerm,
-    prefix
+    prefix: await askPrefix(),
+    lang: await askLanguage()
   }
-}
-
-async function question(...questions) {
-  return new Promise((resolve, reject) => {
-    const promptOptions = {
-      onCancel: () => reject(new Error('The user has stopped answering'))
-    }
-    prompts(questions, promptOptions)
-      .then(resolve)
-  })
-}
-
-function isValidString(any) {
-  return typeof any === 'string' ? any.trim() !== '' : false
 }
 
 async function suggestSearchTerms(suggestionType) {
+  console.log(`Preparing suggestions from ${suggestionType}`)
   switch (suggestionType.trim()) {
     case Suggestion.GOOGLE_TRENDS_API:
       return await getGoogleTrendsFromApi()
@@ -101,6 +66,88 @@ async function suggestSearchTerms(suggestionType) {
   }
 }
 
-function toPromptChoice(obj) {
-  return Object.values(obj).map( x => ({ title: x, value: x }))
+async function askSearchType() {
+  const { searchType } = await prompt({
+    type: 'select',
+    name: 'searchType',
+    message: 'Choose one search type:',
+    choices: valuesToChoices(Suggestion),
+    validate: isValidString
+  })
+  return searchType
+}
+
+async function askSuggestion(subject, suggestions) {
+  const { suggestion } = await prompt({
+    type: 'select',
+    name: 'suggestion',
+    message: `Choose one suggested ${subject || 'option'}:`,
+    choices: valuesToChoices(suggestions),
+    validate: isValidString
+  })
+  return suggestion
+}
+
+async function askImagePath(subject) {
+  const { path } = await prompt({
+    type: 'text',
+    name: 'path',
+    message: `Type the image path${ subject ? ' for ' + subject : `` }: `,
+    validate: isValidString
+  })
+  return path
+}
+
+async function askTypedSearchTerm(searchType) {
+  const { searchTerm } = await prompt({
+    type: 'text',
+    name: 'searchTerm',
+    message: `Type a ${searchType} term: `,
+    validate: isValidString
+  })
+  return searchTerm
+}
+
+async function askPrefix() {
+  const { prefix } = await prompt({
+    type: 'select',
+    name: 'prefix',
+    message: 'Choose one option:',
+    choices: valuesToChoices(['Who is', 'What is', 'The history of']),
+    validate: isValidString
+  })
+  return prefix
+}
+
+async function askLanguage() {
+  const { language } = await prompt({
+    type: 'select',
+    name: 'language',
+    message: 'Choose language:',
+    choices: keysToChoices(optionalLangs),
+    validate: isValidString
+  })
+  return language
+}
+
+async function prompt(...questions) {
+  return new Promise((resolve, reject) => {
+    const promptOptions = {
+      onCancel: () => reject(new Error('The user has stopped answering'))
+    }
+    prompts(questions, promptOptions)
+      .then(resolve)
+  })
+}
+
+function isValidString(any, subject) {
+  return typeof any === 'string' ? any.trim() !== '' : `Invalid ${subject || 'string'}`
+}
+
+function valuesToChoices(obj) {
+  return Object.values(obj).map(v => ({ title: v, value: v }))
+}
+
+function keysToChoices(obj) {
+  return Object.keys(obj).map(k => ({ title: k, value: obj[k] }))
 }

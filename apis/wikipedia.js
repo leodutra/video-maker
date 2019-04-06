@@ -16,7 +16,7 @@ function shortenLangCode(code) {
     return code.trim().toLowerCase().split('-')[0]
 }
 
-async function searchDataByAlgorithmia(searchTerm) {
+async function searchDataByAlgorithmia({ searchTerm }) {
     console.log(`Searching Wikipedia for "${searchTerm}" using Algorithmia...`)
     const algorithmiaAuthenticated = algorithmia(ALGORITHMIA_API_KEY)
     const wikipediaAlgorithm = algorithmiaAuthenticated.algo('web/WikipediaParser/0.1.2')
@@ -24,11 +24,11 @@ async function searchDataByAlgorithmia(searchTerm) {
     return wikipediaResponse.get()
 }
 
-async function searchContentByAlgorithmia(searchTerm) {
-    return (await searchDataByAlgorithmia(searchTerm)).content
+async function searchContentByAlgorithmia(opts) {
+    return (await searchDataByAlgorithmia(opts)).content
 }
 
-async function searchPagesByApi(searchTerm, lang = 'en') {
+async function searchPagesByApi({ searchTerm, lang = 'en' }) {
     lang = shortenLangCode(lang)
     console.log(`Searching possible Wikipedia pages for "${searchTerm}" (${lang})...`)
     const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
@@ -49,7 +49,7 @@ async function searchPagesByApi(searchTerm, lang = 'en') {
     }))
 }
 
-async function fetchDataByApi(exactPageTitle, lang = 'en') {
+async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
     lang = shortenLangCode(lang)
     console.log(`Fetching "${exactPageTitle}" Wikipedia page using Wikipedia API (${lang})...`)
     const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
@@ -81,18 +81,18 @@ async function fetchDataByApi(exactPageTitle, lang = 'en') {
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
         images: await Promise.all(
-            (page.images || []).map(async x => getURLImage(x.title, lang))
+            (page.images || []).map(async x => getImageFromUrl(x.title, lang))
         )
     }
 }
 
-async function fetchContentByApi(exactPageTitle, lang) {
-    return (await fetchDataByApi(exactPageTitle, lang)).content
+async function fetchContentByApi(opts) {
+    return (await fetchDataByApi(opts)).content
 }
 
-async function getURLImage(title, lang = 'en'){
+async function getImageFromUrl(title, lang = 'en'){
     lang = shortenLangCode(lang)
-    console.log(`-\t${title} (${lang})`)
+    console.log(`\t${title} (${lang})`)
     const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
         json: true,
         query: {

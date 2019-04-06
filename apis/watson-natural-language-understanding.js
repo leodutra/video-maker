@@ -12,10 +12,10 @@ module.exports = {
   fetchWatsonKeywords
 }
 
-async function fetchWatsonKeywords(sentence) {
+async function fetchWatsonKeywords({ text }) {
   return new Promise((resolve, reject) => {
     nlu.analyze({
-      text: sentence,
+      text,
       features: {
         keywords: {}
       }
@@ -23,9 +23,7 @@ async function fetchWatsonKeywords(sentence) {
       if (error) {
         return reject(error)
       }
-
-      const keywords = response.keywords.map(keyword => keyword.text)
-      resolve(keywords)
+      resolve(response.keywords.map(keyword => keyword.text))
     })
   })
 }

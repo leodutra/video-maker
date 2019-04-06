@@ -6,7 +6,7 @@ module.exports = {
   classifyImage
 }
 
-async function classifyImage(imagePath) {
+async function classifyImage({ imagePath }) {
   const identifiedClasses = await requestWatson(imagePath)
   return identifiedClasses.images[0].classifiers[0].classes[0].class
 }

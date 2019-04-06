@@ -9,12 +9,18 @@ module.exports = {
 async function produceText({ searchTerm, maxSentences, lang }) {
   console.log(`Producing text content for the search term "${searchTerm}"...`)
   return Promise.resolve(searchTerm)
-    // .then(searchTerm => searchContentByAlgorithmia(searchTerm, lang))
-    .then(searchTerm => fetchContentByApi(searchTerm, lang))
-    .then(sanitizeContent)
-    .then(breakContentIntoSentences)
-    .then(limitMaximumSentences(maxSentences))
-    .then(fetchKeywordsOfAllSentences)
+    // .then(searchTerm => searchContentByAlgorithmia({ searchTerm, lang }))
+    .then(searchTerm => fetchContentByApi({ exactPageTitle: searchTerm, lang }))
+    .then(content => {
+      if (content) {
+        return Promise.resolve(content)
+          .then(sanitizeContent)
+          .then(breakContentIntoSentences)
+          .then(limitMaximumSentences(maxSentences))
+          .then(fetchKeywordsOfAllSentences)
+      }
+      return null
+    })
 }
 
 function sanitizeContent(content) {
@@ -24,7 +30,7 @@ function sanitizeContent(content) {
 }
 
 function removeBlankLinesAndMarkdown(text) {
-  const allLines = (text || '').split('\n')
+  const allLines = text.split('\n')
   const withoutBlankLinesAndMarkdown = allLines.filter(
     line => line.trim() && line.trim().startsWith('=') === false
   )
@@ -56,7 +62,7 @@ async function fetchKeywordsOfAllSentences(sentences) {
     sentences.map(
       async sentence => ({
         ...sentence,
-        keywords: await fetchWatsonKeywords(sentence.text)
+        keywords: await fetchWatsonKeywords({ text: sentence.text })
       })
     )
   )

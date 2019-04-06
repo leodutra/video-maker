@@ -4,9 +4,9 @@ module.exports = {
     downloadImageToFs
 }
 
-async function downloadImageToFs(imageUrl, destination) {
+async function downloadImageToFs({ imgUrl, destination }) {
     return imageDownloader.image({
-        url: imageUrl,
+        url: imgUrl,
         dest: destination
     })
 }

@@ -1,29 +1,34 @@
 const googleTrends = require('google-trends-api')
 const RssParser = require('rss-parser')
 
-const TREND_RSS_URL = 'https://trends.google.com/trends/trendingsearches/daily/rss?geo=BR'
-
 module.exports = {
   getGoogleTrendsFromRss,
   getGoogleTrendsFromApi
 }
 
-async function getGoogleTrendsFromRss(maxCount = 10) {
+async function getGoogleTrendsFromRss({ lang, maxCount = 10 }) {
+  const geo = extractLanguageGeoCode(lang)
   const rssParser = new RssParser()
-  const trends = await rssParser.parseURL(TREND_RSS_URL)
+  const trends = await rssParser.parseURL(
+    `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`
+  )
   return trends.items.map(trend => trend.title)
-    .slice(0, maxCount - 1 || 1)
+    .slice(0, maxCount + 1)
 }
 
-async function getGoogleTrendsFromApi(maxCount) {
+async function getGoogleTrendsFromApi({ lang, maxCount = 10 }) {
   const trendsSettings = {
     trendDate: new Date(),
-    geo: 'BR',
-    hl: "pt-BR"
+    geo: extractLanguageGeoCode(lang),
+    hl: lang
   }
   const results = await googleTrends.realTimeTrends(trendsSettings)
   const trendingStories = JSON.parse(results).storySummaries.trendingStories
-  return trendingStories.map(story => story.entityNames)
-    .slice(0, maxCount - 1 || 1)
+  return trendingStories.map(story => story.entityNames[0])
+    .slice(0, maxCount + 1)
 }
 
+function extractLanguageGeoCode(lang) {
+  const parts = lang.split('-')
+  return parts[parts.length - 1]
+}

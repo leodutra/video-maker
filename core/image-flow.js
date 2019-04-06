@@ -26,7 +26,6 @@ async function produceImages({ searchTerm, sentences }) {
     deleteByGlob(`${CONTENT_FOLDER}/*`)
     const downloadMgr = new DownloadManager()
     console.log(`Fetching and converting images...`)
-    let readyTotal = 0
     const processedSentences = await Promise.all(
         sentences.map(async (sentence, sentenceIndex) => {
             const keyword = sentence.keywords[0]
@@ -36,7 +35,6 @@ async function produceImages({ searchTerm, sentences }) {
             const downloadedImagePath = await downloadMgr.downloadUnrepeatableGoogleImage(imageLinks, sentenceIndex, keyword)
             const convertedImage = await convertImage(downloadedImagePath)
             const sentenceTextImage = await createSentenceTextImage(sentenceIndex, sentence.text)
-            console.log(`${++readyTotal} images ready.`)
             return {
                 ...sentence,
                 googleImgSearchQuery,
@@ -66,19 +64,19 @@ class DownloadManager {
             const imgUrl = imageUrls[i]
             try {
                 if (this.downloadedUrlSet.has(imgUrl)) {
-                    throw new Error(`Imagem "${imgUrl}" já foi baixada.`)
+                    throw new Error(`Image already downloaded.`)
                 }
                 const extension = trimToLower(new URL(imgUrl).pathname.split('.').pop())
                 if (!extension || supportedImageExtensions.includes(extension) === false) {
-                    throw new Error(`Imagem com extensão não suportada ou não reconhecida: "${imgUrl}".`)
+                    throw new Error(`Imagem with unknown or unsupported extension.`)
                 }
                 this.downloadedUrlSet.add(imgUrl)
                 const destination = `${CONTENT_FOLDER}/bg-${this.downloadedUrlSet.size}-${sentenceIndex}.${extension}`
-                const { filename } = await downloadImageToFs(imgUrl, destination)
-                console.log(`> [${sentenceIndex}][${i}] Baixou imagem com sucesso: "${imgUrl}"`)
+                const { filename } = await downloadImageToFs({ imgUrl, destination })
+                console.log(`> Downloaded image ${i + 1} for "${keyword}".\n\t${imgUrl}`)                
                 return filename
             } catch (error) {
-                console.log(`> [${sentenceIndex}][${i}] Erro ao baixar ("${imgUrl}"): ${error}`)
+                console.log(`> Error downloading image ${i + 1} for "${keyword}".\n\t${imgUrl}\n\t(${error})`)
             }
         }
         throw new Error(`No Image found for the keyword "${keyword}"`)
@@ -127,7 +125,6 @@ async function convertImage(imgPath) {
                 if (error) {
                     return reject(error)
                 }
-
                 console.log(`> Image converted: ${inputFile}`)
                 resolve(outputFile)
             })
@@ -137,7 +134,6 @@ async function convertImage(imgPath) {
 async function createSentenceTextImage(sentenceIndex, sentenceText) {
     return new Promise((resolve, reject) => {
         const outputFile = `${CONTENT_FOLDER}/sentence-${sentenceIndex}.png`
-
         const templateSettings = {
             0: {
                 size: '1920x400',
@@ -167,9 +163,7 @@ async function createSentenceTextImage(sentenceIndex, sentenceText) {
                 size: '1920x400',
                 gravity: 'center'
             }
-
         }
-
         gm()
             .out('-size', templateSettings[sentenceIndex].size)
             .out('-gravity', templateSettings[sentenceIndex].gravity)
@@ -181,8 +175,7 @@ async function createSentenceTextImage(sentenceIndex, sentenceText) {
                 if (error) {
                     return reject(error)
                 }
-
-                console.log(`> Sentence created: ${outputFile}`)
+                console.log(`> Sentence file created: ${outputFile}`)
                 resolve()
             })
     })
@@ -198,7 +191,7 @@ async function createYouTubeThumbnail(inputPath) {
                 if (error) {
                     return reject(error)
                 }
-                console.log('> Creating YouTube thumbnail')
+                console.log('> Creating YouTube thumbnail.')
                 resolve(outputFile)
             })
     })

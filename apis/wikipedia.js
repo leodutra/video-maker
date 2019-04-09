@@ -1,15 +1,22 @@
 const algorithmia = require('algorithmia')
 const got = require('got')
 const jsonpath = require('jsonpath')
+const promisesProgress = require('promises-progress')
 
 const ALGORITHMIA_API_KEY = require('../credentials/algorithmia.json').apiKey
+
+const WikipediaApi = Object.freeze({
+    HTTP: 'HTTP API',
+    ALGORITHMIA: 'Algorithmia'
+})
 
 module.exports = {
     searchDataByAlgorithmia,
     searchContentByAlgorithmia,
     searchPagesByApi,
     fetchDataByApi,
-    fetchContentByApi
+    fetchContentByApi,
+    WikipediaApi
 }
 
 function shortenLangCode(code) {
@@ -70,7 +77,7 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
     const page = pages[0]
     console.log(`${pages.length} page(s) found. The most relevant page is "${page.title}".`)
     if (!page) return null
-    console.log(`Fetching page "${page.title}" images...`)
+    console.log(`Fetching image urls for the page "${page.title}"...`)
     return {
         pageid: page.pageid,
         title: page.title,
@@ -81,9 +88,16 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
         images: await Promise.all(
-            (page.images || []).map(async x => getImageFromUrl(x.title, lang))
+            promisesProgress(
+                (page.images || []).map(async x => getImageFromUrl(x.title, lang)),
+                logPercentResolvedCurry('image URLs', 'acquired')
+            )
         )
     }
+}
+
+function logPercentResolvedCurry(subject, verb = 'processed') {
+    return percent => console.log(`${(percent * 100).toFixed(0)} % of the ${subject} have been ${verb}.`)
 }
 
 async function fetchContentByApi(opts) {

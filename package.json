@@ -24,6 +24,7 @@
   "homepage": "https://github.com/filipedeschamps/video-maker#readme",
   "dependencies": {
     "algorithmia": "^0.3.10",
+    "fastify": "^2.2.0",
     "gm": "^1.23.1",
     "google-trends-api": "^4.9.0",
     "googleapis": "^38.0.0",
@@ -37,6 +38,7 @@
     "request-promise": "^4.2.4",
     "rimraf": "^2.6.3",
     "rss-parser": "^3.6.2",
+    "rxjs": "^6.4.0",
     "sbd": "^1.0.14",
     "watson-developer-cloud": "^3.18.2"
   },

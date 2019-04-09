@@ -1,4 +1,4 @@
-const { searchContentByAlgorithmia, fetchContentByApi } = require('../apis/wikipedia')
+const { searchContentByAlgorithmia, fetchContentByApi, WikipediaApi } = require('../apis/wikipedia')
 const sentenceBoundaryDetection = require('sbd')
 const { fetchWatsonKeywords } = require('../apis/watson-natural-language-understanding')
 
@@ -6,21 +6,25 @@ module.exports = {
   produceText
 }
 
-async function produceText({ searchTerm, maxSentences, lang }) {
+async function produceText({ searchTerm, maxSentences, lang, wikipediaApi }) {
   console.log(`Producing text content for the search term "${searchTerm}"...`)
   return Promise.resolve(searchTerm)
-    // .then(searchTerm => searchContentByAlgorithmia({ searchTerm, lang }))
-    .then(searchTerm => fetchContentByApi({ exactPageTitle: searchTerm, lang }))
-    .then(content => {
-      if (content) {
-        return Promise.resolve(content)
+    .then(fetchContentCurry(wikipediaApi, lang))
+    .then(content => content
+      ? Promise.resolve(content)
           .then(sanitizeContent)
           .then(breakContentIntoSentences)
           .then(limitMaximumSentences(maxSentences))
           .then(fetchKeywordsOfAllSentences)
-      }
-      return null
-    })
+      : null
+    )
+}
+
+function fetchContentCurry(wikipediaApi, lang) {
+  return async searchTerm => 
+    wikipediaApi === WikipediaApi.ALGORITHMIA
+      ? searchContentByAlgorithmia({ searchTerm })
+      : fetchContentByApi({ exactPageTitle: searchTerm, lang })
 }
 
 function sanitizeContent(content) {

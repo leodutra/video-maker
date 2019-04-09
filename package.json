@@ -31,6 +31,7 @@
     "image-downloader": "^3.4.2",
     "imdb-scrapper": "^2.2.0",
     "jsonpath": "^1.0.1",
+    "promises-progress": "^1.0.3",
     "prompts": "^2.0.4",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",

@@ -4,6 +4,7 @@ const { downloadImageToFs } = require('../apis/http')
 const rimraf = require('rimraf')
 const path = require('path')
 const { URL } = require('url')
+const promisesProgress = require('promises-progress')
 
 module.exports = {
     produceImages
@@ -24,30 +25,41 @@ async function produceImages({ searchTerm, sentences }) {
     console.log(`Will produce images.`)
     console.log(`Cleaning content folder...`)
     deleteByGlob(`${CONTENT_FOLDER}/*`)
-    const downloadMgr = new DownloadManager()
     console.log(`Fetching and converting images...`)
+    const downloadMgr = new DownloadManager()
     const processedSentences = await Promise.all(
-        sentences.map(async (sentence, sentenceIndex) => {
-            const keyword = sentence.keywords[0]
-            const googleImgSearchQuery = `${searchTerm} ${keyword}`
-            const images = await searchImages({ query: googleImgSearchQuery })
-            const imageLinks = images.map(x => x.link)
-            const downloadedImagePath = await downloadMgr.downloadUnrepeatableGoogleImage(imageLinks, sentenceIndex, keyword)
-            const convertedImage = await convertImage(downloadedImagePath)
-            const sentenceTextImage = await createSentenceTextImage(sentenceIndex, sentence.text)
-            return {
-                ...sentence,
-                googleImgSearchQuery,
-                downloadedImage: convertedImage,
-                textImage: sentenceTextImage
-            }
-        })
+        promisesProgress(
+            sentences.map(processSentenceCurry(searchTerm, downloadMgr)),
+            logPercentResolvedCurry('sentences')
+        )
     )
     return {
-        // downloadedImages: downloadMgr.getDownloadedImages(),
+        downloadedImages: downloadMgr.getDownloadedImages(),
         sentences: processedSentences,
         youtubeThumbnail: await createYouTubeThumbnail(processedSentences[0].downloadedImage)
     }
+}
+
+function processSentenceCurry(searchTerm, downloadMgr) {
+    return async (sentence, sentenceIndex) => {
+        const keyword = sentence.keywords[0]
+        const googleImgSearchQuery = `${searchTerm} ${keyword}`
+        const images = await searchImages({ query: googleImgSearchQuery })
+        const imageLinks = images.map(x => x.link)
+        const downloadedImagePath = await downloadMgr.downloadUnrepeatableGoogleImage(imageLinks, sentenceIndex, keyword)
+        const convertedImage = await convertImage(downloadedImagePath)
+        const sentenceTextImage = await createSentenceTextImage(sentenceIndex, sentence.text)
+        return {
+            ...sentence,
+            googleImgSearchQuery,
+            downloadedImage: convertedImage,
+            textImage: sentenceTextImage
+        }
+    }
+}
+
+function logPercentResolvedCurry(subject, verb = 'processed') {
+    return percent => console.log(`${(percent * 100).toFixed(0)} % of the ${subject} have been ${verb}.`)
 }
 
 async function deleteByGlob(dir) {
@@ -196,4 +208,3 @@ async function createYouTubeThumbnail(inputPath) {
             })
     })
 }
-

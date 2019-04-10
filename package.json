@@ -5,12 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "build-win": "pkg -t node11-win-x64 index.js",
-    "build-mac": "pkg -t node11-macos-x64 index.js",
-    "build-linux": "pkg -t node11-linux-x64 index.js",
-    "build-win-x86": "pkg -t node11-win-x86 index.js",
-    "build-mac-x86": "pkg -t node11-macos-x86 index.js",
-    "build-linux-x86": "pkg -t node11-linux-x86 index.js"
+    "build-win": "pkg -t node10-win-x64 index.js",
+    "build-mac": "pkg -t node10-macos-x64 index.js",
+    "build-linux": "pkg -t node10-linux-x64 index.js",
+    "build-win-x86": "pkg -t node10-win-x86 index.js",
+    "build-mac-x86": "pkg -t node10-macos-x86 index.js",
+    "build-linux-x86": "pkg -t node10-linux-x86 index.js"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,7 @@
     "fastify": "^2.2.0",
     "gm": "^1.23.1",
     "google-trends-api": "^4.9.0",
-    "googleapis": "^38.0.0",
+    "googleapis": "^39.2.0",
     "got": "^9.6.0",
     "image-downloader": "^3.4.2",
     "imdb-scrapper": "^2.2.0",
@@ -37,16 +37,16 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "rimraf": "^2.6.3",
-    "rss-parser": "^3.6.2",
+    "rss-parser": "^3.7.0",
     "rxjs": "^6.4.0",
-    "sbd": "^1.0.14",
-    "watson-developer-cloud": "^3.18.2"
+    "sbd": "^1.0.15",
+    "watson-developer-cloud": "^4.0.1"
   },
   "devDependencies": {
-    "eslint": "^5.15.3",
+    "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-jest": "^22.4.1",
-    "jest": "^24.5.0",
+    "jest": "^24.7.1",
     "pkg": "^4.3.7"
   }
 }

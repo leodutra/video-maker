@@ -1,10 +1,8 @@
-const gm = require('gm').subClass({ imageMagick: true })
+const rimraf = require('rimraf')
+const { URL } = require('url')
+const { progressAll } = require('./utils')
 const { searchImages } = require('../apis/google-customsearch')
 const { downloadImageToFs } = require('../apis/http')
-const rimraf = require('rimraf')
-const path = require('path')
-const { URL } = require('url')
-const promisesProgress = require('promises-progress')
 const blacklistedImages = require('../blacklist.json').images || []
 
 module.exports = {
@@ -13,7 +11,7 @@ module.exports = {
 
 const CONTENT_FOLDER = `./content`
 
-const supportedImageExtensions = [ // Reference: http://www.graphicsmagick.org/
+const gMagickSupportedExtensions = [ // Reference: http://www.graphicsmagick.org/
     'jpg',
     'png',
     'jpeg',
@@ -30,7 +28,7 @@ async function downloadImages({ searchTerm, sentences }) {
 
 async function fetchAllImageUrls({ searchTerm, sentences }) {
     console.log(`Fetching image urls...`)
-    return withProgressControl(
+    return progressAll(
         'the image urls have been fetched.',
         sentences.map(async sentence => {
             const query = `${searchTerm} ${sentence.keywords[0]}`
@@ -44,12 +42,11 @@ async function fetchAllImageUrls({ searchTerm, sentences }) {
 }
 
 async function downloadAllImages(sentencesWithImgs) {
-    console.log(`Will produce images.`)
-    console.log(`Cleaning content folder...`)
+    console.log(`Will produce images.\nCleaning content folder...`)
     deleteByGlob(`${CONTENT_FOLDER}/*`)
     console.log(`Downloading images...`)
     const downloadedImages = new Set()
-    return withProgressControl(
+    return progressAll(
         'the images have been downloaded.',
         sentencesWithImgs.map(async sentence => {
             const keyword = sentence.keywords[0]
@@ -60,7 +57,7 @@ async function downloadAllImages(sentencesWithImgs) {
                         throw new Error(`Image already downloaded.`)
                     }
                     const extension = trimToLower(new URL(imgUrl).pathname.split('.').pop())
-                    if (!extension || supportedImageExtensions.includes(extension) === false) {
+                    if (!extension || gMagickSupportedExtensions.includes(extension) === false) {
                         throw new Error(`Image with unknown or unsupported extension.`)
                     }
                     if (blacklistedImages.includes(imgUrl)) {
@@ -85,19 +82,6 @@ async function downloadAllImages(sentencesWithImgs) {
 
 async function deleteByGlob(dir) {
     return new Promise(resolve => rimraf(dir, error => error ? reject(error) : resolve()))
-}
-
-async function withProgressControl(description, promises) {
-    return Promise.all(
-        promisesProgress(
-            promises,
-            logPercentResolvedCurry(description)
-        )
-    )
-}
-
-function logPercentResolvedCurry(description = 'the items have been processed.') {
-    return percent => console.log(`${(percent * 100).toFixed(0)} % of ${description}`)
 }
 
 function trimToLower(any) {

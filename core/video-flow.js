@@ -1,8 +1,7 @@
 const gm = require('gm').subClass({imageMagick: true})
-const state = require('./state.js')
 const spawn = require('child_process').spawn
 const path = require('path')
-const promisesProgress = require('promises-progress')
+const { progressAll } = require('./utils')
 const rootPath = path.resolve(__dirname, '..')
 
 const CONTENT_FOLDER = `./content`
@@ -29,7 +28,7 @@ async function produceVideo({ sentences }) {
 }
 
 async function convertAllImages(sentences) {
-  return withProgressControl(
+  return progressAll(
     'the sentence images have been converted.',
     sentences.map((sentence, i) => convertImage(sentence.downloadedImage))
   )
@@ -77,7 +76,7 @@ async function convertImage(imgPath) {
 }
 
 async function createAllSentenceImages(sentences) {
-  return withProgressControl(
+  return progressAll(
     'the sentence images have been created.',
     sentences.map((sentence, i) => createSentenceImage(i, sentence.text))
   )
@@ -182,17 +181,4 @@ async function renderVideoWithAfterEffects() {
       resolve(destinationFilePath)
     })
   })
-}
-
-async function withProgressControl(description, promises) {
-  return Promise.all(
-      promisesProgress(
-          promises,
-          logPercentResolvedCurry(description)
-      )
-  )
-}
-
-function logPercentResolvedCurry(description = 'the items have been processed.') {
-  return percent => console.log(`${(percent * 100).toFixed(0)} % of ${description}`)
 }

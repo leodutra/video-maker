@@ -87,24 +87,11 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
         url: jsonpath.value(page, '$.fullurl'),
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
-        images: await withProgressControl(
+        images: await progressAll(
             'the image URLs have been acquired.',
             (page.images || []).map(async x => getImageFromUrl(x.title, lang))
         )
     }
-}
-
-async function withProgressControl(description, promises) {
-    return Promise.all(
-        promisesProgress(
-            promises,
-            logPercentResolvedCurry(description)
-        )
-    )
-}
-
-function logPercentResolvedCurry(description = 'the items have been processed.') {
-    return percent => console.log(`${(percent * 100).toFixed(0)} % of ${description}`)
 }
 
 async function fetchContentByApi(opts) {
@@ -127,3 +114,12 @@ async function getImageFromUrl(title, lang = 'en'){
     return jsonpath.value(response.body, '$.query.pages..imageinfo[0].url')
 }
 
+async function progressAll(description, promises) {
+    description = description || 'the items have been processed.'
+    return Promise.all(
+        promisesProgress(
+            promises, 
+            percent => console.log(`${(percent * 100).toFixed(0)} % of ${description}`)
+        )
+    )
+}

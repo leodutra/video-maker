@@ -43,20 +43,18 @@ async function inputFlow() {
     else {
       switch (serviceType) {
         case ServiceType.WATSON_IMG_CLASSF: 
-          // Watson - Image Classification
           const imagePath = await askText(`image path for ${ServiceType.WATSON_IMG_CLASSF}`)
           searchTerm = await classifyImage({ imagePath })
           break
         default: 
         case ServiceType.WIKIPEDIA_SEARCH:
-          // Wikipedia
           searchTerm = await askText(`${serviceType} search term`)
           break
       }
     }
     wikipediaApi = await askOption('Wikipedia API', WikipediaApi)
     
-    // PREVENTS DESAMBIGUATION AND TYPOS
+    // PREVENTS DISAMBIGUATION AND TYPOS
     if (wikipediaApi === WikipediaApi.HTTP) { 
       const possiblePages = await searchPagesByApi({ searchTerm , lang })
       if (possiblePages.length) {
@@ -130,11 +128,11 @@ function isValidString(any, subject) {
   return typeof any === 'string' ? any.trim() !== '' : `Invalid ${subject || 'string'}.`
 }
 
-function valuesToChoices(obj) { // obj or array
+function valuesToChoices(obj) {
   return Object.values(obj).map(v => ({ title: v, value: v }))
 }
 
-function keysToChoices(obj) { // obj or array
+function keysToChoices(obj) {
   return Object.keys(obj).map(k => ({ title: k, value: obj[k] }))
 }
 

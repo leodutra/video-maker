@@ -57,10 +57,10 @@ async function downloadAllImages({ searchTerm, sentences, maxPerSentence }) {
                     logDownloadError(attempt, keyword, imgUrl, 'Blacklisted image.')
                     continue
                 }
+                downloadedImages.add(imgUrl)
                 const destination = `${CONTENT_FOLDER}/bg-${sentenceIndex}-${i}.${extension}`
                 try {
                     const { filename } = await downloadImageToFs({ imgUrl, destination })
-                    downloadedImages.add(imgUrl)
                     console.log(`\n> Downloaded image ${attempt} for "${keyword}".\n\t${imgUrl}`)
                     return {
                         ...sentence,

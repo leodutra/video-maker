@@ -1,13 +1,13 @@
 const algorithmia = require('algorithmia')
 const got = require('got')
 const jsonpath = require('jsonpath')
-const promisesProgress = require('promises-progress')
+const { allPromisesProgress } = require('../core/utils')
 
 const ALGORITHMIA_API_KEY = require('../credentials/algorithmia.json').apiKey
 
 const WikipediaApi = Object.freeze({
-    HTTP: 'HTTP API',
-    ALGORITHMIA: 'Algorithmia'
+    HTTP: 'HTTP query API',
+    ALGORITHMIA: 'Algorithmia API'
 })
 
 module.exports = {
@@ -24,7 +24,7 @@ function shortenLangCode(code) {
 }
 
 async function searchDataByAlgorithmia({ searchTerm }) {
-    console.log(`Searching Wikipedia for "${searchTerm}" using Algorithmia...`)
+    console.log(`> Searching Wikipedia for "${searchTerm}" using Algorithmia...`)
     const algorithmiaAuthenticated = algorithmia(ALGORITHMIA_API_KEY)
     const wikipediaAlgorithm = algorithmiaAuthenticated.algo('web/WikipediaParser/0.1.2')
     const wikipediaResponse = await wikipediaAlgorithm.pipe(searchTerm)
@@ -37,7 +37,7 @@ async function searchContentByAlgorithmia(opts) {
 
 async function searchPagesByApi({ searchTerm, lang = 'en' }) {
     lang = shortenLangCode(lang)
-    console.log(`Searching possible Wikipedia pages for "${searchTerm}" (${lang})...`)
+    console.log(`> Searching possible Wikipedia pages for "${searchTerm}" (language: ${lang})...`)
     const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
         json: true,
         query: {
@@ -58,7 +58,7 @@ async function searchPagesByApi({ searchTerm, lang = 'en' }) {
 
 async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
     lang = shortenLangCode(lang)
-    console.log(`Fetching "${exactPageTitle}" Wikipedia page using Wikipedia API (${lang})...`)
+    console.log(`> Fetching "${exactPageTitle}" Wikipedia page using Wikipedia API (language: ${lang})...`)
     const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
         json: true,
         query: {
@@ -75,9 +75,9 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
     const pages = Object.values(jsonpath.value(response.body, '$.query.pages'))
     if (pages.length === 0) return null
     const page = pages[0]
-    console.log(`${pages.length} page(s) found. The most relevant page is "${page.title}".`)
+    console.log(`> ${pages.length} page(s) found. The most relevant page is "${page.title}".`)
     if (!page) return null
-    console.log(`Fetching image urls for the page "${page.title}"...`)
+    console.log(`> Fetching image urls for the page "${page.title}"...`)
     return {
         pageid: page.pageid,
         title: page.title,
@@ -87,8 +87,8 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
         url: jsonpath.value(page, '$.fullurl'),
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
-        images: await progressAll(
-            'the image URLs have been acquired.',
+        images: await allPromisesProgress(
+            '> Fetching image URLs:',
             (page.images || []).map(async x => getImageFromUrl(x.title, lang))
         )
     }
@@ -100,7 +100,7 @@ async function fetchContentByApi(opts) {
 
 async function getImageFromUrl(title, lang = 'en'){
     lang = shortenLangCode(lang)
-    console.log(`\t${title} (${lang})`)
+    console.log(`> Will fetch URL for: ${title} (language: ${lang})`)
     const response = await got(`https://${lang}.wikipedia.org/w/api.php`, {
         json: true,
         query: {
@@ -112,14 +112,4 @@ async function getImageFromUrl(title, lang = 'en'){
         }
     })
     return jsonpath.value(response.body, '$.query.pages..imageinfo[0].url')
-}
-
-async function progressAll(description, promises) {
-    description = description || 'the items have been processed.'
-    return Promise.all(
-        promisesProgress(
-            promises, 
-            percent => console.log(`${(percent * 100).toFixed(0)} % of ${description}`)
-        )
-    )
 }

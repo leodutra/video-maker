@@ -4,26 +4,22 @@ const NaturalLanguageUnderstandingV1 = require('watson-developer-cloud/natural-l
 
 const nlu = new NaturalLanguageUnderstandingV1({
   iam_apikey: watsonNluConfig.apikey,
-  version: '2018-04-05',
+  version: '2018-11-16',
   url: watsonNluConfig.url
 })
 
-module.exports = {
-  fetchWatsonKeywords
+const defaultFeatures = {
+  keywords: {}
 }
 
-async function fetchWatsonKeywords({ text }) {
+module.exports = {
+  analyzeNaturalLanguage
+}
+
+async function analyzeNaturalLanguage(opts = {}) {
+  opts.features = opts.features || defaultFeatures
+  console.log(`> Natural language analysis: ${opts.text || opts.url}...`)
   return new Promise((resolve, reject) => {
-    nlu.analyze({
-      text,
-      features: {
-        keywords: {}
-      }
-    }, (error, response) => {
-      if (error) {
-        return reject(error)
-      }
-      resolve(response.keywords.map(keyword => keyword.text))
-    })
+    nlu.analyze(opts, (error, response) => error ? reject(error) : resolve(response))
   })
 }

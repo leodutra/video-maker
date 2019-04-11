@@ -1,36 +1,33 @@
 const gm = require('gm').subClass({imageMagick: true})
 const spawn = require('child_process').spawn
 const path = require('path')
-const { progressAll } = require('./utils')
-const rootPath = path.resolve(__dirname, '..')
+const fs = require('fs')
 
 const CONTENT_FOLDER = `./content`
-const PATH_AFTER_EFFECTS_SCRIPT = `${CONTENT_FOLDER}/after-effects-script.js`
+const rootPath = path.resolve(__dirname, '..')
 
-module.exports = {
-  produceVideo
-}
+module.exports = videoFlow
 
-async function produceVideo({ sentences }) {
+async function videoFlow({ sentences }) {
   const convertedImages = await convertAllImages(sentences)
   const sentenceImages = await createAllSentenceImages(sentences)
   const youtubeThumbnail = await createYouTubeThumbnail(sentenceImages[0])
   console.log('DONE')
-  // await createAfterEffectsScript({ sentences })
-  // const renderedVideo = await renderVideoWithAfterEffects()
+  // const scriptPath = await createAfterEffectsScript({ sentences })
+  // const videoPath = await renderVideoWithAfterEffects()
   return {
     convertedImages,
     sentenceImages,
     youtubeThumbnail,
-    renderedVideo,
-    scriptPath: PATH_AFTER_EFFECTS_SCRIPT 
+    // videoPath,
+    // scriptPath
   }
 }
 
 async function convertAllImages(sentences) {
-  return progressAll(
-    'the sentence images have been converted.',
-    sentences.map((sentence, i) => convertImage(sentence.downloadedImage))
+  console.log('Converting background images...')
+  return Promise.all(
+    sentences.map(sentence => convertImage(sentence.downloadedImage))
   )
 }
 
@@ -69,16 +66,16 @@ async function convertImage(imgPath) {
           return reject(error)
         }
 
-        console.log(`> Image converted: ${inputFile}`)
+        console.log(`> Image converted: ${inputFile}.`)
         resolve(outputFile)
       })
   })
 }
 
 async function createAllSentenceImages(sentences) {
-  return progressAll(
-    'the sentence images have been created.',
-    sentences.map((sentence, i) => createSentenceImage(i, sentence.text))
+  console.log('Creating sentence images...')
+  return Promise.all(
+    sentences.map((sentence, index) => createSentenceImage(index, sentence.text))
   )
 }
 
@@ -114,8 +111,19 @@ async function createSentenceImage(sentenceIndex, sentenceText) {
       6: {
         size: '1920x400',
         gravity: 'center'
+      },
+      7: {
+        size: '1920x400',
+        gravity: 'center'
+      },
+      8: {
+        size: '1920x1080',
+        gravity: 'center'
+      },
+      9: {
+        size: '800x1080',
+        gravity: 'west'
       }
-
     }
 
     gm()
@@ -130,7 +138,7 @@ async function createSentenceImage(sentenceIndex, sentenceText) {
           return reject(error)
         }
 
-        console.log(`> Sentence created: ${outputFile}`)
+        console.log(`> Sentence created: ${outputFile}.`)
         resolve(outputFile)
       })
   })
@@ -146,16 +154,17 @@ async function createYouTubeThumbnail(imgPath) {
           return reject(error)
         }
 
-        console.log('> Creating YouTube thumbnail')
+        console.log('> Creating YouTube thumbnail.')
         resolve(outputPath)
       })
   })
 }
 
 async function createAfterEffectsScript(content) {
-  const contentString = JSON.stringify(content)
-  const scriptString = `var content = ${contentString}`
-  return fs.writeFileSync(PATH_AFTER_EFFECTS_SCRIPT, scriptString)
+  const outputFile = `${CONTENT_FOLDER}/after-effects-script.js`
+  const scriptString = `var content = ${JSON.stringify(content)}`
+  fs.writeFileSync(outputFile, scriptString)
+  return outputFile
 }
 
 async function renderVideoWithAfterEffects() {
@@ -164,7 +173,7 @@ async function renderVideoWithAfterEffects() {
     const templateFilePath = `${rootPath}/templates/1/template.aep`
     const destinationFilePath = `${rootPath}/content/output.mov`
 
-    console.log('> Starting After Effects')
+    console.log('> Starting After Effects.')
 
     const aerender = spawn(aerenderFilePath, [
       '-comp', 'main',
@@ -177,7 +186,7 @@ async function renderVideoWithAfterEffects() {
     })
 
     aerender.on('close', () => {
-      console.log('> After Effects closed')
+      console.log('> After Effects closed.')
       resolve(destinationFilePath)
     })
   })

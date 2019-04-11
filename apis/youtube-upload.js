@@ -12,8 +12,8 @@ module.exports = {
 }
 
 class OAuthConsentServer {
-    contructor({ logger = true } = {}) {
-        this.fastify = fastify({logger})
+    constructor({ logger = true } = {}) {
+        this.fastify = fastify({ logger })
         this.observable = RxJS.from(new Promise((resolve, reject) => {
             this.fastify.get('/oauth2callback', (req, res) => {
                 const authCode = req.query.code
@@ -26,7 +26,7 @@ class OAuthConsentServer {
     }
     async start(port = 5000) {
         await this.fastify.listen(port)
-        console.log(`> Listening on http://localhost:${port}`)
+        console.log(`> ${OAuthConsentServer.name} listening on http://localhost:${port}.`)
     }
     async waitForGoogleCallback() {
         return this.observable.toPromise()
@@ -60,13 +60,12 @@ function requestUserConsent(OAuthClient) {
         access_type: 'offline',
         scope: ['https://www.googleapis.com/auth/youtube']
     })
-    console.log(`> Please give your consent: ${consentUrl}`)
+    console.log(`> ${OAuthConsentServer.name}: Please give your consent ${consentUrl}`)
 }
 
 async function requestGoogleForAccessTokens(OAuthClient, authorizationToken) {
     const tokens = await OAuthClient.getToken(authorizationToken)
-    console.log('> Access tokens received:')
-    console.log(tokens)
+    console.log(`> Access tokens received:\n${tokens}`)
     return tokens
 }
 
@@ -100,6 +99,7 @@ async function uploadVideo({
 }
 
 async function uploadThumbnail(videoInformation, videoThumbnailFilePath) {
+    console.log(`> Will upload to YouTube: ${videoThumbnailFilePath}\n\t`)
     const videoId = videoInformation.id
     const requestParameters = {
       videoId: videoId,
@@ -115,9 +115,21 @@ async function uploadThumbnail(videoInformation, videoThumbnailFilePath) {
 }
 
 function uploadProgressCurry(videoFileSize) {
+
+    const bar = new cliProgress.Bar(
+		{
+			format: `Video upload: [{bar}] {percentage}% | ETA: {eta}s | {value}/{total} bytes`
+		}, 
+		cliProgress.Presets.shades_classic
+    )
+    
+    bar.start(videoFileSize, 0)
+    
     return event => {
-        const progress = Math.round( (event.bytesRead / videoFileSize) * 100 )
-        console.log(`> ${progress}% completed`)
+        bar.update(++event.bytesRead)
+        if (event.bytesRead >= bar.getTotal()) {
+            bar.stop()
+        }
     }
 }
 

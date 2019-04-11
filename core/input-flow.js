@@ -27,11 +27,9 @@ const ServiceType = Object.freeze({
   WIKIPEDIA_SEARCH: 'Wikipedia search'
 })
 
-module.exports = {
-  askQuestions
-}
+module.exports = inputFlow
 
-async function askQuestions() {
+async function inputFlow() {
   let searchTerm
   let lang
   let wikipediaApi
@@ -57,13 +55,15 @@ async function askQuestions() {
       }
     }
     wikipediaApi = await askOption('Wikipedia API', WikipediaApi)
-    if (wikipediaApi === WikipediaApi.HTTP) {
-      const possiblePages = await searchPagesByApi({ searchTerm })
+    
+    // PREVENTS DESAMBIGUATION AND TYPOS
+    if (wikipediaApi === WikipediaApi.HTTP) { 
+      const possiblePages = await searchPagesByApi({ searchTerm , lang })
       if (possiblePages.length) {
         searchTerm = await askOption('Wikipedia page', possiblePages.map(x => x.title))
       }
       else {
-        console.log(`Nenhuma página encontrada para esta busca ("${searchTerm}")`)
+        console.log(`Nenhuma página encontrada para esta busca ("${searchTerm}").`)
         searchTerm = null
       }
     }
@@ -77,7 +77,7 @@ async function askQuestions() {
 }
 
 async function suggestSearchTerms(suggestionType, lang, maxCount) {
-  console.log(`Preparing suggestions from ${suggestionType}`)
+  console.log(`Preparing suggestions from ${suggestionType}...`)
   switch (suggestionType.trim()) {
     case ServiceType.GOOGLE_TRENDS_API:
       return await getGoogleTrendsFromApi({ lang, maxCount })
@@ -105,7 +105,7 @@ async function askOption(subject, options, useKeys = false) {
 
 async function askText(subject) {
   if (!subject) {
-    throw new TypeError(`Missing subject for ${askText.name}`)
+    throw new TypeError(`Missing subject for ${askText.name}.`)
   }
   const { input } = await prompt({
     type: 'text',
@@ -119,7 +119,7 @@ async function askText(subject) {
 async function prompt(...questions) {
   return new Promise((resolve, reject) => {
     const promptOptions = { 
-      onCancel: (error) => reject(new Error(`Prompt canceled: ${JSON.stringify(error, null, 2)}`))
+      onCancel: (error) => reject(new Error(`Prompt canceled: ${JSON.stringify(error, null, 2)}.`))
     }
     prompts(questions, promptOptions)
       .then(resolve)
@@ -127,7 +127,7 @@ async function prompt(...questions) {
 }
 
 function isValidString(any, subject) {
-  return typeof any === 'string' ? any.trim() !== '' : `Invalid ${subject || 'string'}`
+  return typeof any === 'string' ? any.trim() !== '' : `Invalid ${subject || 'string'}.`
 }
 
 function valuesToChoices(obj) { // obj or array

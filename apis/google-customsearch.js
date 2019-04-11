@@ -7,13 +7,14 @@ module.exports = {
     searchImages
 }
 
-async function searchImages({ query, limit = 2 }) {
+async function searchImages({ query, maxCount = 20 }) {
+    console.log(`> Searching Google images for "${query}" (max: ${maxCount})...`)
     const response = await customSearch.cse.list({
         auth: googleSearchCredentials.apiKey,
         cx: googleSearchCredentials.searchEngineId,
         q: query,
         searchType: 'image',
-        num: limit
+        num: maxCount
     })
     return response.data.items
 }

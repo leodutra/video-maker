@@ -1,73 +1,96 @@
 const { searchContentByAlgorithmia, fetchContentByApi, WikipediaApi } = require('../apis/wikipedia')
 const sentenceBoundaryDetection = require('sbd')
-const { fetchWatsonKeywords } = require('../apis/watson-natural-language-understanding')
+const { analyzeNaturalLanguage } = require('../apis/watson-natural-language-understanding')
+const { allPromisesProgress } = require('./utils')
 
-module.exports = {
-  produceText
+const MAX_SENTENCES = 10
+
+module.exports = textFlow
+
+async function textFlow({ searchTerm, lang, wikipediaApi }) {
+  const sentences = await (
+    fetchContent(searchTerm, wikipediaApi, lang)    
+      .then(sanitizeContent)
+      .then(breakContentIntoSentences)
+      .then(limitMaximumSentences(MAX_SENTENCES))
+      .then(fetchNaturalSentenceUnderstanding)
+      .then(logKeywords)
+  )
+  return {
+    sentences
+  }
 }
-
-async function produceText({ searchTerm, maxSentences, lang, wikipediaApi }) {
-  console.log(`Producing text content for the search term "${searchTerm}"...`)
-  return Promise.resolve(searchTerm)
-    .then(fetchContentCurry(wikipediaApi, lang))
-    .then(content => content
-      ? Promise.resolve(content)
-          .then(sanitizeContent)
-          .then(breakContentIntoSentences)
-          .then(limitMaximumSentences(maxSentences))
-          .then(fetchKeywordsOfAllSentences)
-      : null
-    )
-}
-
-function fetchContentCurry(wikipediaApi, lang) {
-  return async searchTerm => 
-    wikipediaApi === WikipediaApi.ALGORITHMIA
-      ? searchContentByAlgorithmia({ searchTerm })
-      : fetchContentByApi({ exactPageTitle: searchTerm, lang })
+  
+async function fetchContent(searchTerm, wikipediaApi, lang) {
+  const content = wikipediaApi === WikipediaApi.ALGORITHMIA
+    ? await searchContentByAlgorithmia({ searchTerm })
+    : await fetchContentByApi({ exactPageTitle: searchTerm, lang })
+  if (!content) {
+    throw new Error(`Could not find page content for the search term ${searchTerm}.`)
+  }
+  return content
 }
 
 function sanitizeContent(content) {
-  console.log(`Sanitizing content...`)
+  console.log(`> Sanitizing content...`)
   content = removeBlankLinesAndMarkdown(content)
   return removeDatesInParentheses(content)
 }
 
-function removeBlankLinesAndMarkdown(text) {
-  const allLines = text.split('\n')
+function removeBlankLinesAndMarkdown(content) {
+  console.log(`> Removing blank lines and markdown...`)
+  const allLines = content.split('\n')
   const withoutBlankLinesAndMarkdown = allLines.filter(
     line => line.trim() && line.trim().startsWith('=') === false
   )
   return withoutBlankLinesAndMarkdown.join(' ')
 }
 
-function removeDatesInParentheses(text) {
-  return text.replace(/\((?:\([^()]*\)|[^()])*\)/gm, '').replace(/\s{2,}/g, ' ')
+function removeDatesInParentheses(content) {
+  console.log(`> Removing dates in parentheses...`)
+  return content.replace(/\((?:\([^()]*\)|[^()])*\)/gm, '').replace(/\s{2,}/g, ' ')
 }
 
 function breakContentIntoSentences(content) {
-  console.log(`Breaking content into sentences...`)
-  const sentences = sentenceBoundaryDetection.sentences(content)
-  return sentences.map(sentence => (
-    {
-      text: sentence,
-      keywords: [],
-      images: []
-    }
-  ))
+  console.log(`> Breaking content into sentences...`)
+  return sentenceBoundaryDetection.sentences(content)
 }
 
 function limitMaximumSentences(max) {
-  return sentences => sentences.slice(0, max)
+  return sentences => {
+    console.log(`> Limiting sentences to the max of ${max}...`)
+    return sentences.slice(0, max)
+  }
 }
 
-async function fetchKeywordsOfAllSentences(sentences) {
-  return Promise.all(
+async function fetchNaturalSentenceUnderstanding(sentences) {
+  return allPromisesProgress(
+    `Fetching keywords from Watson:`,
     sentences.map(
-      async sentence => ({
-        ...sentence,
-        keywords: await fetchWatsonKeywords({ text: sentence.text })
-      })
+      async sentence => {
+        const watsonData = await analyzeNaturalLanguage({ text: sentence })
+        return {
+          text: sentence,
+          keywords: watsonData.keywords.map(k => k.text),
+          images: []
+        }
+      }
     )
   )
+}
+
+function logKeywords(sentences) {
+  const topKeywords = []
+  const keywords = []
+  sentences.forEach(sentence => 
+    sentence.keywords.forEach((k, i) => {
+      if (i === 0)
+        topKeywords.push(k)
+      else
+        keywords.push(k)
+    })
+  )
+  console.log(`Most relevant keywords: \n\t${topKeywords.join('\n\t')}`)
+  console.log(`Other keywords: ${keywords.join(', ')}`)
+  return sentences
 }

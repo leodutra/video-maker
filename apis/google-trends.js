@@ -7,6 +7,7 @@ module.exports = {
 }
 
 async function getGoogleTrendsFromRss({ lang, maxCount = 10 }) {
+  console.log(`> Getting Google trends from RSS (language: ${lang} - max: ${maxCount})...`)
   const geo = extractLanguageGeoCode(lang)
   const rssParser = new RssParser()
   const trends = await rssParser.parseURL(
@@ -17,6 +18,7 @@ async function getGoogleTrendsFromRss({ lang, maxCount = 10 }) {
 }
 
 async function getGoogleTrendsFromApi({ lang, maxCount = 10 }) {
+  console.log(`> Getting Google trends from API (language: ${lang} - max: ${maxCount})...`)
   const trendsSettings = {
     trendDate: new Date(),
     geo: extractLanguageGeoCode(lang),

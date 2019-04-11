@@ -31,7 +31,7 @@ async function downloadAllImages({ searchTerm, sentences, maxCount }) {
     const downloadedImages = new Set()
     return allPromisesProgress(
         'Downloading images:',
-        sentences.map(async sentence => {
+        sentences.map(async (sentence, sentenceIndex) => {
             const keyword = sentence.keywords[0]
             const uniqueWords = new Set([
                 ...searchTerm.split(/\s-_/),
@@ -44,40 +44,40 @@ async function downloadAllImages({ searchTerm, sentences, maxCount }) {
             for(let i = 0; i < imgUrls.length; i++) {
                 const attempt = i + 1;
                 const imgUrl = imgUrls[i]
-                let error = null
                 if (downloadedImages.has(imgUrl)) {
-                    error = `Image already downloaded.`
+                    logDownloadError(attempt, keyword, imgUrl, `Image already downloaded.`)
                     continue
                 }
                 const extension = trimToLower(new URL(imgUrl).pathname.split('.').pop())
                 if (!extension || gMagickSupportedExtensions.includes(extension) === false) {
-                    error = `Image with unknown or unsupported extension.`
+                    logDownloadError(attempt, keyword, imgUrl, `Image with unknown or unsupported extension.`)
                     continue
                 }
                 if (blacklistedImages.includes(imgUrl)) {
-                    error = 'Blacklisted image.'
+                    logDownloadError(attempt, keyword, imgUrl, 'Blacklisted image.')
                     continue
                 }
-                downloadedImages.add(imgUrl)
-                const destination = `${CONTENT_FOLDER}/bg-${downloadedImages.size}-${i}.${extension}`
+                const destination = `${CONTENT_FOLDER}/bg-${sentenceIndex}-${i}.${extension}`
                 try {
                     const { filename } = await downloadImageToFs({ imgUrl, destination })
-                    console.log(`\n> Downloaded image ${i + 1} for "${keyword}".\n\t${imgUrl}.`)                
+                    downloadedImages.add(imgUrl)
+                    console.log(`\n> Downloaded image ${attempt} for "${keyword}".\n\t${imgUrl}`)
                     return {
                         ...sentence,
                         images,
                         downloadedImage: filename
                     }
                 } catch (error) {
-                    error = error.message
-                }
-                if (error) {
-                    console.log(`\n> Error downloading image ${attempt} for "${keyword}".\n\t${imgUrl}\n\t(${error}).`)
+                    logDownloadError(attempt, keyword, imgUrl, error)
                 }
             }
             throw new Error(`\nNo Image found for the keyword "${keyword}".`)
         })
     )
+}
+
+function logDownloadError(attempt, keyword, imgUrl, error) {
+    console.log(`\n> Error downloading image ${attempt} for "${keyword}".\n\t${imgUrl}\n\t`, error)
 }
 
 async function deleteByGlob(dir) {

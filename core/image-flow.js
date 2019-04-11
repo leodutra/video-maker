@@ -21,11 +21,11 @@ module.exports = imageFlow
 
 async function imageFlow({ searchTerm, sentences }) {
     return {
-        sentences: await downloadAllImages({ searchTerm, sentences, maxCount: MAX_IMAGES_PER_SENTENCE })
+        sentences: await downloadAllImages({ searchTerm, sentences, maxPerSentence: MAX_IMAGES_PER_SENTENCE })
     }
 }
 
-async function downloadAllImages({ searchTerm, sentences, maxCount }) {
+async function downloadAllImages({ searchTerm, sentences, maxPerSentence }) {
     console.log(`Will produce images.\nCleaning content folder...`)
     deleteByGlob(`${CONTENT_FOLDER}/*`)
     const downloadedImages = new Set()
@@ -38,7 +38,7 @@ async function downloadAllImages({ searchTerm, sentences, maxCount }) {
                 ...keyword.split(/\s-_/)
             ])
             const query = [...uniqueWords].join(' ')
-            const images = await searchImages({ query, maxCount })
+            const images = await searchImages({ query, maxCount: maxPerSentence })
             const imgUrls = images.map(img => img.link)
 
             for(let i = 0; i < imgUrls.length; i++) {

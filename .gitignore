@@ -74,3 +74,6 @@ content.json
 content/*
 Adobe After Effects Auto-Save
 .DS_Store
+
+# state files
+state-*.json

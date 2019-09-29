@@ -1,11 +1,16 @@
 const fs = require('fs')
 const cliProgress = require('cli-progress')
+const mkdirpLib = require('mkdirp')
+const rimrafLib = require('rimraf')
 
 module.exports = {
     promisesProgress,
     allPromisesProgress,
     readFileAsync,
-    writeFileAsync
+    writeFileAsync,
+    rimraf,
+    mkdirp,
+    trimToLower
 }
 
 async function writeFileAsync(file, data, options) {
@@ -53,3 +58,14 @@ function promisesProgress(description, promises) {
     })
 }
 
+async function rimraf(dir) {
+    return new Promise((resolve, reject) => rimrafLib(dir, error => error ? reject(error) : resolve()))
+}
+
+async function mkdirp(dir) {
+    return new Promise((resolve, reject) => mkdirpLib(dir, error => error ? reject(error) : resolve()))
+}
+
+function trimToLower(any) {
+    return typeof any === 'string' ? any.trim().toLowerCase() : any
+}

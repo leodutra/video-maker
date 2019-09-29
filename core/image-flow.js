@@ -1,6 +1,5 @@
-const rimraf = require('rimraf')
 const { URL } = require('url')
-const { allPromisesProgress } = require('./utils')
+const { allPromisesProgress, trimToLower, rimraf, mkdirp } = require('./utils')
 const { searchImages } = require('../apis/google-customsearch')
 const { downloadImageToFs } = require('../apis/http')
 const blacklistedImages = require('../blacklist.json').images || []
@@ -19,15 +18,16 @@ const gMagickSupportedExtensions = [ // Reference: http://www.graphicsmagick.org
 
 module.exports = imageFlow
 
-async function imageFlow({ searchTerm, sentences }) {
+async function imageFlow({ searchTerm, sentences, credentials }) {
     return {
-        sentences: await downloadAllImages({ searchTerm, sentences, maxPerSentence: MAX_IMAGES_PER_SENTENCE })
+        sentences: await downloadAllImages({ searchTerm, sentences, credentials, maxPerSentence: MAX_IMAGES_PER_SENTENCE })
     }
 }
 
-async function downloadAllImages({ searchTerm, sentences, maxPerSentence }) {
+async function downloadAllImages({ searchTerm, sentences, credentials, maxPerSentence }) {
     console.log(`Will produce images.\nCleaning content folder...`)
-    deleteByGlob(`${CONTENT_FOLDER}/*`)
+    await rimraf(`${CONTENT_FOLDER}`)
+    await mkdirp(`${CONTENT_FOLDER}`)
     const downloadedImages = new Set()
     return allPromisesProgress(
         'Downloading images:',
@@ -37,8 +37,12 @@ async function downloadAllImages({ searchTerm, sentences, maxPerSentence }) {
                 ...searchTerm.toLowerCase().split(/\s-_/),
                 ...keyword.toLowerCase().split(/\s-_/)
             ])
-            const query = `${content.searchTerm} ${[...uniqueWords].join(' ')}`
-            const images = await searchImages({ query, maxCount: maxPerSentence })
+            const query = `${searchTerm} ${[...uniqueWords].join(' ')}`
+            const images = await searchImages({
+                query, 
+                maxCount: maxPerSentence, 
+                googleSearchCredentials: credentials.googleSearch
+            })
             const imgUrls = images.map(img => img.link)
 
             for(let i = 0; i < imgUrls.length; i++) {
@@ -78,12 +82,4 @@ async function downloadAllImages({ searchTerm, sentences, maxPerSentence }) {
 
 function logDownloadError(attempt, keyword, imgUrl, error) {
     console.log(`\n> Error downloading image ${attempt} for "${keyword}".\n\t${imgUrl}\n\t`, error)
-}
-
-async function deleteByGlob(dir) {
-    return new Promise(resolve => rimraf(dir, error => error ? reject(error) : resolve()))
-}
-
-function trimToLower(any) {
-    return typeof any === 'string' ? any.trim().toLowerCase() : any
 }

@@ -1,25 +1,26 @@
-
-const watsonNluConfig = require('../credentials/watson-nlu.json')
 const NaturalLanguageUnderstandingV1 = require('watson-developer-cloud/natural-language-understanding/v1.js')
 
-const nlu = new NaturalLanguageUnderstandingV1({
-  iam_apikey: watsonNluConfig.apikey,
-  version: '2018-11-16',
-  url: watsonNluConfig.url
-})
-
 const defaultFeatures = {
-  keywords: {}
+    keywords: {}
 }
 
 module.exports = {
-  analyzeNaturalLanguage
+    analyzeNaturalLanguage
 }
 
-async function analyzeNaturalLanguage(opts = {}) {
-  opts.features = opts.features || defaultFeatures
-  console.log(`> Natural language analysis: ${opts.text || opts.url}...`)
-  return new Promise((resolve, reject) => {
-    nlu.analyze(opts, (error, response) => error ? reject(error) : resolve(response))
-  })
+let nlu
+
+async function analyzeNaturalLanguage(analyzeParams = {}, watsonNluConfig) {
+    analyzeParams.features = analyzeParams.features || defaultFeatures
+    console.log(`> Natural language analysis: ${analyzeParams.text || analyzeParams.url}...`)
+    if (!nlu) {
+        nlu = new NaturalLanguageUnderstandingV1({
+            iam_apikey: watsonNluConfig.apikey,
+            version: watsonNluConfig.version || '2019-07-12',
+            url: watsonNluConfig.url
+        })
+    }
+    return new Promise((resolve, reject) => {
+        nlu.analyze(analyzeParams, (error, response) => error ? reject(error) : resolve(response))
+    })
 }

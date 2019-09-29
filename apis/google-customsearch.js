@@ -1,13 +1,11 @@
 const google = require('googleapis').google
 const customSearch = google.customsearch('v1')
 
-const googleSearchCredentials = require('../credentials/google-search.json')
-
 module.exports = {
     searchImages
 }
 
-async function searchImages({ query, maxCount = 20 }) {
+async function searchImages({ query, maxCount = 20, googleSearchCredentials }) {
     console.log(`> Searching Google images for "${query}" (max: ${maxCount})...`)
     const response = await customSearch.cse.list({
         auth: googleSearchCredentials.apiKey,

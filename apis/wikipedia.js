@@ -3,8 +3,6 @@ const got = require('got')
 const jsonpath = require('jsonpath')
 const { allPromisesProgress } = require('../core/utils')
 
-const ALGORITHMIA_API_KEY = require('../credentials/algorithmia.json').apiKey
-
 const WikipediaApi = Object.freeze({
     HTTP: 'HTTP query API',
     ALGORITHMIA: 'Algorithmia API'
@@ -23,9 +21,9 @@ function shortenLangCode(code) {
     return code.trim().toLowerCase().split('-')[0]
 }
 
-async function searchDataByAlgorithmia({ searchTerm }) {
+async function searchDataByAlgorithmia({ searchTerm, algorithmiaApiKey }) {
     console.log(`> Searching Wikipedia for "${searchTerm}" using Algorithmia...`)
-    const algorithmiaAuthenticated = algorithmia(ALGORITHMIA_API_KEY)
+    const algorithmiaAuthenticated = algorithmia(algorithmiaApiKey)
     const wikipediaAlgorithm = algorithmiaAuthenticated.algo('web/WikipediaParser/0.1.2')
     const wikipediaResponse = await wikipediaAlgorithm.pipe(searchTerm)
     return wikipediaResponse.get()

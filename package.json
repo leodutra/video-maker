@@ -4,6 +4,7 @@
   "description": "Projeto open source para fazer vídeos automatizados",
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "test": "jest",
     "build-win": "pkg -t node10-win-x64 index.js",
     "build-mac": "pkg -t node10-macos-x64 index.js",

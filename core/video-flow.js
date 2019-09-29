@@ -1,4 +1,4 @@
-const gm = require('gm').subClass({imageMagick: true})
+const gm = require('gm').subClass({ imageMagick: true })
 const spawn = require('child_process').spawn
 const path = require('path')
 const fs = require('fs')
@@ -12,6 +12,7 @@ async function videoFlow({ sentences }) {
   const convertedImages = await convertAllImages(sentences)
   const sentenceImages = await createAllSentenceImages(sentences)
   const youtubeThumbnail = await createYouTubeThumbnail(sentenceImages[0])
+  const videoPath = renderVideoWithFFMpeg({ sentences })
   console.log('DONE')
   // const scriptPath = await createAfterEffectsScript({ sentences })
   // const videoPath = await renderVideoWithAfterEffects()
@@ -19,7 +20,7 @@ async function videoFlow({ sentences }) {
     convertedImages,
     sentenceImages,
     youtubeThumbnail,
-    // videoPath,
+    videoPath,
     // scriptPath
   }
 }
@@ -35,7 +36,7 @@ async function convertImage(imgPath) {
   return new Promise((resolve, reject) => {
     const extension = path.extname(imgPath)
     const basename = path.basename(imgPath, extension)
-    
+
     const inputFile = imgPath
     const outputFile = path.resolve(CONTENT_FOLDER, `converted-${basename}${extension}`)
     const width = 1920
@@ -44,17 +45,17 @@ async function convertImage(imgPath) {
     gm()
       .in(inputFile)
       .out('(')
-        .out('-clone')
-        .out('0')
-        .out('-background', 'white')
-        .out('-blur', '0x9')
-        .out('-resize', `${width}x${height}^`)
+      .out('-clone')
+      .out('0')
+      .out('-background', 'white')
+      .out('-blur', '0x9')
+      .out('-resize', `${width}x${height}^`)
       .out(')')
       .out('(')
-        .out('-clone')
-        .out('0')
-        .out('-background', 'white')
-        .out('-resize', `${width}x${height}`)
+      .out('-clone')
+      .out('0')
+      .out('-background', 'white')
+      .out('-resize', `${width}x${height}`)
       .out(')')
       .out('-delete', '0')
       .out('-gravity', 'center')
@@ -190,4 +191,90 @@ async function renderVideoWithAfterEffects() {
       resolve(destinationFilePath)
     })
   })
+}
+
+async function renderVideoWithFFMpeg({ sentences }) {
+  return new Promise((resolve, reject) => {
+    let images = [];
+
+    var qntImages = 0;
+
+    for (
+      let sentenceIndex = 0; sentenceIndex < sentences.length; sentenceIndex++
+    ) {
+      images.push({
+        path: `./content/${sentenceIndex}-converted.png`,
+        caption: sentences[sentenceIndex].text
+      });
+      qntImages++;
+    }
+
+    const videoOptions = {
+      fps: 25,
+      loop: 10, // seconds
+      transition: true,
+      transitionDuration: 1, // seconds
+      videoBitrate: 1024,
+      videoCodec: "libx264",
+      size: "1280x720",
+      audioBitrate: "128k",
+      audioChannels: 2,
+      format: "mp4",
+      pixelFormat: "yuv420p",
+      useSubRipSubtitles: false, // Use ASS/SSA subtitles instead
+      subtitleStyle: {
+        Fontname: "Courier New",
+        Fontsize: "37",
+        PrimaryColour: "11861244",
+        SecondaryColour: "11861244",
+        TertiaryColour: "11861244",
+        BackColour: "-2147483640",
+        Bold: "2",
+        Italic: "0",
+        BorderStyle: "2",
+        Outline: "2",
+        Shadow: "3",
+        Alignment: "1", // left, middle, right
+        MarginL: "40",
+        MarginR: "60",
+        MarginV: "40"
+      }
+    };
+
+    var i = 0;
+
+    console.log("> [video-robot] Starting render")
+
+    videoshow(images, videoOptions)
+      // .audio("song.mp3")
+      .save("video.mp4")
+      .on("start", function (command) {
+        console.log("> [video-robot] ffmpeg process started:", command);
+        i++;
+      })
+      .on('progress', function (progress) {
+        var process = 0;
+        if (i <= 1) {
+          process = progress.percent;
+          process = process / qntImages;
+        } else {
+          process = progress.percent;
+        }
+        if (typeof process === 'undefined') {
+          process = 0;
+        }
+        console.log("> [video-robot] Processing: " + process.toFixed(2) + "%");
+
+      })
+      .on("error", function (err, stdout, stderr) {
+        console.error("> [video-robot] Error:", err);
+        console.error("> [video-robot] ffmpeg stderr:", stderr);
+      })
+      .on("end", function (output) {
+        console.log("> [video-robot] Video created in:", output);
+        resolve();
+      });
+  });
+
+
 }

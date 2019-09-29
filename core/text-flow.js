@@ -7,12 +7,12 @@ const MAX_SENTENCES = 10
 
 module.exports = textFlow
 
-async function textFlow({ searchTerm, lang, wikipediaApi }) {
+async function textFlow({ searchTerm, lang, wikipediaApi, qtySentences = MAX_SENTENCES }) {
   const sentences = await (
     fetchContent(searchTerm, wikipediaApi, lang)    
       .then(sanitizeContent)
       .then(breakContentIntoSentences)
-      .then(limitMaximumSentences(MAX_SENTENCES))
+      .then(limitMaximumSentences(qtySentences))
       .then(fetchNaturalSentenceUnderstanding)
       .then(logKeywords)
   )

@@ -32,6 +32,7 @@ module.exports = inputFlow
 async function inputFlow() {
   let searchTerm
   let lang
+  let qtySentences
   let wikipediaApi
   while (!searchTerm) {
     lang = await askOption('language', languages, true)
@@ -52,6 +53,7 @@ async function inputFlow() {
           break
       }
     }
+    qtySentences = Number(await askText('How many sentences do you want in your video: '))
     wikipediaApi = await askOption('Wikipedia API', WikipediaApi)
     
     // PREVENTS DISAMBIGUATION AND TYPOS
@@ -70,7 +72,8 @@ async function inputFlow() {
     prefix: await askOption('prefix', prefixes),
     searchTerm,
     lang,
-    wikipediaApi
+    wikipediaApi,
+    qtySentences,
   }
 }
 

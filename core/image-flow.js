@@ -37,7 +37,7 @@ async function downloadAllImages({ searchTerm, sentences, maxPerSentence }) {
                 ...searchTerm.toLowerCase().split(/\s-_/),
                 ...keyword.toLowerCase().split(/\s-_/)
             ])
-            const query = [...uniqueWords].join(' ')
+            const query = `${content.searchTerm} ${[...uniqueWords].join(' ')}`
             const images = await searchImages({ query, maxCount: maxPerSentence })
             const imgUrls = images.map(img => img.link)
 

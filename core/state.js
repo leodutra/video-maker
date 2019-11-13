@@ -1,22 +1,25 @@
 const fs = require('fs')
-const { readFileAsync, writeFileAsync } = require('./utils')
+const { readFile, writeFile } = require('./utils')
+
+const defaultPath = name => `./state-${name}.json`
 
 class State {
     constructor(name = 'default') {
-        this._fsPath = `./state-${name}.json`
-        if (!fs.existsSync(this._fsPath)) {
+        this.filepath = defaultPath(name)
+        if (fs.existsSync(this.filepath)) {
+            this.load()
+        } else {
             this.init()
         }
     }
     async init(initialState = {}) {
-        return this.save(initialState)
+        this.save(initialState)
     }
     async save(content) {
-        await writeFileAsync(this._fsPath, JSON.stringify(content, null, 2))
-        return this
+        await writeFile(this.filepath, JSON.stringify(content, null, 2))
     }
     async load() {
-        return JSON.parse(await readFileAsync(this._fsPath, 'utf-8'))
+        return JSON.parse(await readFile(this.filepath, 'utf-8'))
     }
     async propagate(...functions) {
         for (const fn of functions) {
@@ -25,13 +28,11 @@ class State {
                     `> ${this.constructor.name}.${this.propagate.name}() requires only functions.`
                 )
             }
-            const state = await this.load()
-            const data = await fn(state)
-            const dataKeys = Object.keys(data).join(', ')
+            const result = await fn(await this.load())
             console.log(
-                `> ${this.constructor.name}: ${fn.name || 'anonymous'}() returned keys: { ${dataKeys} }`
+                `> ${this.constructor.name}: ${fn.name || 'anonymous'}() returned keys: { ${Object.keys(result).join(', ')} }`
             )
-            await this.save({ ...state, ...data })
+            await this.save(result)
         }
         return this
     }

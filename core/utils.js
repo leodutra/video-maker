@@ -6,14 +6,14 @@ const rimrafLib = require('rimraf')
 module.exports = {
     promisesProgress,
     allPromisesProgress,
-    readFileAsync,
-    writeFileAsync,
+    readFile,
+    writeFile,
     rimraf,
     mkdirp,
     trimToLower
 }
 
-async function writeFileAsync(file, data, options) {
+async function writeFile(file, data, options) {
 	return new Promise((resolve, reject) => 
         fs.writeFile(file, data, options, error => 
             error ? reject(error) : resolve()
@@ -21,7 +21,7 @@ async function writeFileAsync(file, data, options) {
 	)
 }
 
-async function readFileAsync(file, options) {
+async function readFile(file, options) {
 	return new Promise((resolve, reject) => 
         fs.readFile(file, options, (error, data) => 
             error ? reject(error) : resolve(data)

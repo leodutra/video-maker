@@ -86,7 +86,7 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
         images: await allPromisesProgress(
-            '> Fetching image URLs:',
+            '> Fetching Wikipedia image URLs:',
             (page.images || []).map(async x => getImageFromUrl(x.title, lang))
         )
     }

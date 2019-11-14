@@ -4,7 +4,7 @@ const { searchPagesByApi, fetchDataByApi } = require('../../apis/wikipedia')
 const { getImbdTrends } = require('../../apis/imdb')
 const { classifyImage } = require('../../apis/watson-visual-recognition')
 const { WikipediaApi } = require('../../apis/wikipedia')
-const R = require('ramda')
+const { stringify } = require('../utils')
 
 const MAX_SUGGESTION_COUNT = 15
 
@@ -128,4 +128,3 @@ const onPromptCancel = reject => error => reject(new Error(`Prompt canceled: ${s
 const isValidString = (any, subject) => typeof any === 'string' && any.trim() !== '' || `Invalid ${subject || 'string'}.`
 const valuesToChoices = obj => Object.values(obj).map(v => ({ title: v, value: v }))
 const keysToChoices = obj => Object.keys(obj).map(k => ({ title: k, value: obj[k] }))
-const stringify = R.curry(JSON.stringify)(R.__, null, 2)

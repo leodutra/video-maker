@@ -1,5 +1,6 @@
 const { URL } = require('url')
-const { allPromisesProgress, trimToLower, rimraf, mkdirp } = require('../utils')
+const { trimToLower, rimraf, mkdirp } = require('../utils')
+const { allPromisesProgress } = require('../../apis/promise-progress')
 const { searchImages } = require('../../apis/google-customsearch')
 const { downloadImageToFs } = require('../../apis/http')
 const blacklistedImages = require('../../blacklist.json').images || []
@@ -30,7 +31,7 @@ async function downloadAllImages({ searchTerm, sentences, credentials, maxPerSen
     await mkdirp(`${CONTENT_FOLDER}`)
     const downloadedImages = new Set()
     return allPromisesProgress(
-        'Downloading images:',
+        'Downloading images',
         sentences.map(async (sentence, sentenceIndex) => {
             const keyword = sentence.keywords[0]
             const uniqueWords = new Set([

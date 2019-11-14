@@ -1,7 +1,8 @@
 const { searchContentByAlgorithmia, fetchContentByApi, WikipediaApi } = require('../../apis/wikipedia')
 const sentenceBoundaryDetection = require('sbd')
 const { analyzeNaturalLanguage } = require('../../apis/watson-natural-language-understanding')
-const { allPromisesProgress, promiseAll } = require('../utils')
+const { promiseAll } = require('../utils')
+const { allPromisesProgress } = require('../../apis/promise-progress')
 const R = require('ramda')
 
 const MAX_SENTENCES = 10

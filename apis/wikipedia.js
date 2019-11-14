@@ -1,7 +1,7 @@
 const algorithmia = require('algorithmia')
 const got = require('got')
 const jsonpath = require('jsonpath')
-const { allPromisesProgress } = require('../core/utils')
+const { allPromisesProgress } = require('./promise-progress')
 
 const WikipediaApi = Object.freeze({
     HTTP: 'HTTP query API',
@@ -86,7 +86,7 @@ async function fetchDataByApi({ exactPageTitle, lang = 'en' }) {
         links: jsonpath.query(page, '$.links[*].title'),
         references: jsonpath.query(page, '$.extlinks[*]["*"]'),
         images: await allPromisesProgress(
-            '> Fetching Wikipedia image URLs:',
+            'Fetching Wikipedia image URLs',
             (page.images || []).map(async x => getImageFromUrl(x.title, lang))
         )
     }

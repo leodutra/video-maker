@@ -1,46 +1,38 @@
-const cliProgress = require('cli-progress')
+const cliProgress = require('./cli-progress')
 const { once } = require('events')
 const fs = require('fs')
 const path = require('path')
 const { DownloadWorker, utils } = require('rapid-downloader')
 
+const progressInfo = x =>
+    `${x.completedPercent}% | ${x.filename} | ${x.downloaded}/${x.total} kB | ${x.speed} | ${x.state}`
+
 class DownloadManager {
-
-    static progressBars = new cliProgress.MultiBar({
-        format: 'Downloading: {bar} {percentage}% | {filename} | ETA: {eta_formatted} | {value}/{total} kB | {speed} | {state}',
-        stopOnComplete: true,
-        clearOnComplete: false,
-        hideCursor: true
-    }, cliProgress.Presets.shades_grey)
-
-    downloads = []
 
     constructor({ showProgress = true } = {}) {
         this.showProgress = showProgress
+        this.downloads = []
     }
 
     download(downloadUrl, saveToPath, opts) {
         const download = new Download(downloadUrl, saveToPath, opts)
+        const filename = path.basename(download.saveToPath)
         if (this.showProgress) {
-            download.on('progress', ({ totalBytes, downloadedBytes, bytesPerSecond, state }) => {
+            let speed
+            let downloaded
+            let total
+            let details
+            download.on('progress', ({ completedPercent, totalBytes, downloadedBytes, bytesPerSecond, state }) => {
                 if (totalBytes && bytesPerSecond) {
-                    const speed = utils.dynamicSpeedUnitDisplay(bytesPerSecond, 2)
+                    speed = utils.dynamicSpeedUnitDisplay(bytesPerSecond, 2)
+                    downloaded = utils.byteToKb(downloadedBytes)
+                    total = utils.byteToKb(totalBytes)
+                    details = progressInfo({ speed, state, value, filename, total, completedPercent })
                     if (download.hasProgressBar()) {
-                        download.updateProgress(
-                            utils.byteToKb(downloadedBytes),
-                            { speed, state }
-                        )
+                        download.updateProgress(downloaded, { details })
                     } else {
                         download.setProgressBar(
-                            DownloadManager.progressBars.create(
-                                utils.byteToKb(totalBytes),
-                                utils.byteToKb(downloadedBytes),
-                                {
-                                    filename: path.basename(download.saveToPath),
-                                    speed,
-                                    state
-                                }
-                            )
+                            cliProgress.create(total, downloaded, { details })
                         )
                     }
                 }
@@ -48,7 +40,16 @@ class DownloadManager {
             download.on('end', () => {
                 download.updateProgress(
                     utils.byteToKb(download.getProgress().totalBytes),
-                    { speed: '0 b/s', state: 'done' }
+                    {
+                        details: progressInfo({
+                            speed: 0,
+                            state: 'done',
+                            value: total,
+                            filename,
+                            total: total,
+                            completedPercent: 100
+                        })
+                    }
                 )
             })
         }

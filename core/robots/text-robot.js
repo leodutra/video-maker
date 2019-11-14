@@ -1,7 +1,7 @@
 const { searchContentByAlgorithmia, fetchContentByApi, WikipediaApi } = require('../../apis/wikipedia')
 const sentenceBoundaryDetection = require('sbd')
 const { analyzeNaturalLanguage } = require('../../apis/watson-natural-language-understanding')
-const { allPromisesProgress } = require('../utils')
+const { allPromisesProgress, promiseAll } = require('../utils')
 const R = require('ramda')
 
 const MAX_SENTENCES = 10
@@ -9,17 +9,17 @@ const MAX_SENTENCES = 10
 module.exports = textRobot
 
 async function textRobot({ searchTerm, lang, wikipediaApi, credentials, qtySentences = MAX_SENTENCES }) {
-    return R.pipe(
+    return R.pipeWith(R.then, [
         fetchContent(searchTerm, wikipediaApi, lang),
         checkContent(searchTerm),
         sanitizeContent,
         breakContentIntoSentences,
         limitMaximumSentences(qtySentences),
-        R.map(fetchKeywordsFromWatson(credentials.watsonNlu)),
-        x => Promise.all(x),
+        R.map(fetchKeywordsFromWatson(credentials.watsonNlu, lang)),
+        promiseAll,
         logKeywords,
         R.objOf('sentences')
-    )()
+    ])()
 }
 
 const limitMaximumSentences = R.take
@@ -39,11 +39,14 @@ const removeBlankLinesAndMarkdown = R.pipe(
     R.join(' ')
 )
 const sanitizeContent = R.pipe(removeBlankLinesAndMarkdown, removeDatesInParentheses)
-const fetchKeywordsFromWatson = watsonNlu => async text => ({
+const fetchKeywordsFromWatson = R.curry(
+    async (nluConfig, language, text) => ({
         text,
-        keywords: (await analyzeNaturalLanguage({ text }, watsonNlu))
+        keywords: (await analyzeNaturalLanguage({ text, language }, nluConfig))
+            .result
             .keywords.map(k => k.text)
-})
+    })
+)
 const fetchContent = (searchTerm, wikipediaApi, lang) => async () =>
     wikipediaApi === WikipediaApi.ALGORITHMIA
         ? searchContentByAlgorithmia({ searchTerm })

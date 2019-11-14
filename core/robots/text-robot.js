@@ -9,7 +9,7 @@ const MAX_SENTENCES = 10
 module.exports = textRobot
 
 async function textRobot({ searchTerm, lang, wikipediaApi, credentials, qtySentences = MAX_SENTENCES }) {
-    return R.pipeP(
+    return R.pipe(
         fetchContent(searchTerm, wikipediaApi, lang),
         checkContent(searchTerm),
         sanitizeContent,

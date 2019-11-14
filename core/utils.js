@@ -5,7 +5,7 @@ const cliProgress = require('cli-progress')
 const mkdirpLib = require('mkdirp')
 const rimrafLib = require('rimraf')
 
-const promiseAll = x => Promise.all(x)
+const promiseAll = array => Promise.all(array)
 const promisify = fn => util.promisify(fn)
 const mkdirp = promisify(mkdirpLib)
 const rimraf = promisify(rimrafLib)

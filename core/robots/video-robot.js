@@ -6,9 +6,9 @@ const fs = require('fs')
 const CONTENT_FOLDER = `./content`
 const rootPath = path.resolve(__dirname, '..')
 
-module.exports = videoFlow
+module.exports = videoRobot
 
-async function videoFlow({ sentences }) {
+async function videoRobot({ sentences }) {
     const convertedImages = await convertAllImages(sentences)
     const sentenceImages = await createAllSentenceImages(sentences)
     const youtubeThumbnail = await createYouTubeThumbnail(sentenceImages[0])

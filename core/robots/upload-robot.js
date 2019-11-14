@@ -2,15 +2,11 @@ const {
     authenticateWithOAuth, 
     uploadVideo, 
     uploadThumbnail
-} = require('../apis/youtube-upload')
+} = require('../../apis/youtube-upload')
 
-module.exports = {
-    uploadFlow
-}
+module.exports = uploadRobot
 
-module.exports = uploadFlow
-
-async function uploadFlow({ prefix, searchTerm, videoPath }) {
+async function uploadRobot({ prefix, searchTerm, videoPath }) {
 
     await authenticateWithOAuth()
 

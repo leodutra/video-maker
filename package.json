@@ -37,6 +37,8 @@
     "mkdirp": "^0.5.1",
     "promises-progress": "^1.0.3",
     "prompts": "^2.0.4",
+    "ramda": "^0.26.1",
+    "rapid-downloader": "^1.2.5",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "rimraf": "^2.6.3",

@@ -1,8 +1,8 @@
 const { URL } = require('url')
-const { allPromisesProgress, trimToLower, rimraf, mkdirp } = require('./utils')
-const { searchImages } = require('../apis/google-customsearch')
-const { downloadImageToFs } = require('../apis/http')
-const blacklistedImages = require('../blacklist.json').images || []
+const { allPromisesProgress, trimToLower, rimraf, mkdirp } = require('../utils')
+const { searchImages } = require('../../apis/google-customsearch')
+const { downloadImageToFs } = require('../../apis/http')
+const blacklistedImages = require('../../blacklist.json').images || []
 
 const CONTENT_FOLDER = `./content`
 const MAX_IMAGES_PER_SENTENCE = 10
@@ -16,9 +16,9 @@ const gMagickSupportedExtensions = [ // Reference: http://www.graphicsmagick.org
     'pdf'
 ]
 
-module.exports = imageFlow
+module.exports = imageRobot
 
-async function imageFlow({ searchTerm, sentences, credentials }) {
+async function imageRobot({ searchTerm, sentences, credentials }) {
     return {
         sentences: await downloadAllImages({ searchTerm, sentences, credentials, maxPerSentence: MAX_IMAGES_PER_SENTENCE })
     }

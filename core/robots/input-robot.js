@@ -1,19 +1,20 @@
 const prompts = require('prompts')
-const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('../apis/google-trends')
-const { searchPagesByApi, fetchDataByApi } = require('../apis/wikipedia')
-const { getImbdTrends } = require('../apis/imdb')
-const { classifyImage } = require('../apis/watson-visual-recognition')
-const { WikipediaApi } = require('../apis/wikipedia')
+const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('../../apis/google-trends')
+const { searchPagesByApi, fetchDataByApi } = require('../../apis/wikipedia')
+const { getImbdTrends } = require('../../apis/imdb')
+const { classifyImage } = require('../../apis/watson-visual-recognition')
+const { WikipediaApi } = require('../../apis/wikipedia')
+const R = require('ramda')
 
 const MAX_SUGGESTION_COUNT = 15
 
-const prefixes = Object.freeze([
+const prefixes = [
     'Who is',
     'What is',
     'The history of'
-])
+]
 
-const languages = Object.freeze({
+const languages = ({
     'Português (BR)': 'pt-BR',
     'English (US)': 'en-US',
     'Español (ES)': 'es-ES'
@@ -27,9 +28,9 @@ const ServiceType = Object.freeze({
     WIKIPEDIA_SEARCH: 'Wikipedia search'
 })
 
-module.exports = inputFlow
+module.exports = inputRobot
 
-async function inputFlow({ credentials }) {
+async function inputRobot({ credentials }) {
     let searchTerm
     let lang
     let qtySentences
@@ -81,11 +82,11 @@ async function suggestSearchTerms(suggestionType, lang, maxCount) {
     console.log(`Preparing suggestions from ${suggestionType}...`)
     switch (suggestionType.trim()) {
         case ServiceType.GOOGLE_TRENDS_API:
-            return await getGoogleTrendsFromApi({ lang, maxCount })
+            return getGoogleTrendsFromApi({ lang, maxCount })
         case ServiceType.GOOGLE_TRENDS_RSS:
-            return await getGoogleTrendsFromRss({ lang, maxCount })
+            return getGoogleTrendsFromRss({ lang, maxCount })
         case ServiceType.IMDB_TRENDS:
-            return await getImbdTrends({ maxCount })
+            return getImbdTrends({ maxCount })
         default:
             return []
     }
@@ -117,25 +118,14 @@ async function askText(subject) {
     return input
 }
 
-async function prompt(...questions) {
-    return new Promise((resolve, reject) => {
-        const promptOptions = {
-            onCancel: (error) => reject(new Error(`Prompt canceled: ${JSON.stringify(error, null, 2)}.`))
-        }
-        prompts(questions, promptOptions)
-            .then(resolve)
-    })
-}
 
-function isValidString(any, subject) {
-    return typeof any === 'string' ? any.trim() !== '' : `Invalid ${subject || 'string'}.`
-}
-
-function valuesToChoices(obj) {
-    return Object.values(obj).map(v => ({ title: v, value: v }))
-}
-
-function keysToChoices(obj) {
-    return Object.keys(obj).map(k => ({ title: k, value: obj[k] }))
-}
-
+// const prompt = async (...questions) => prompts(questions)
+const prompt = async (...questions) => 
+    new Promise((resolve, reject) => 
+        prompts(questions, { onCancel: onPromptCancel(reject) }).then(resolve)
+    )
+const onPromptCancel = reject => error => reject(new Error(`Prompt canceled: ${stringify(error)}.`))
+const isValidString = (any, subject) => typeof any === 'string' && any.trim() !== '' || `Invalid ${subject || 'string'}.`
+const valuesToChoices = obj => Object.values(obj).map(v => ({ title: v, value: v }))
+const keysToChoices = obj => Object.keys(obj).map(k => ({ title: k, value: obj[k] }))
+const stringify = R.curry(JSON.stringify)(R.__, null, 2)

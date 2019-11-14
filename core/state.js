@@ -25,11 +25,12 @@ class State {
                     `> ${this.constructor.name}.${this.propagate.name}() requires only functions.`
                 )
             }
-            const result = await fn(this.load())
+            const state = this.load()
+            const result = await fn(state)
             console.log(
                 `> ${this.constructor.name}: ${fn.name || 'anonymous'}() returned keys: { ${Object.keys(result).join(', ')} }`
             )
-            this.save(result)
+            this.save({ ...state, ...result })
         }
     }
 }

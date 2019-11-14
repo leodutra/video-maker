@@ -36,6 +36,7 @@ function promisesProgress(description, promises) {
 module.exports = {
     allPromisesProgress,
     mkdirp,
+    promiseAll,
     promisesProgress,
     promisify,
     rimraf,

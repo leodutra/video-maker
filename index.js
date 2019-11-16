@@ -8,16 +8,16 @@ const { State } = require('./core/state')
 
 async function start() {
     const state = new State()
-    // state.init({
-    //     credentials: {
-    //         watsonNlu: require('./credentials/watson-nlu.json'),
-    //         googleSearch: require('./credentials/google-search.json'),
-    //         watsonClassifier: require('./credentials/watson-classifier.json'),
-    //         // algorithmia: require('./credentials/algorithmia.json'),
-    //     }
-    // })
+    state.init({
+        credentials: {
+            // watsonNlu: require('./credentials/watson-nlu.json'),
+            // googleSearch: require('./credentials/google-search.json'),
+            // watsonClassifier: require('./credentials/watson-classifier.json'),
+            // algorithmia: require('./credentials/algorithmia.json'),
+        }
+    })
     await state.propagate(
-        // inputRobot,
+        inputRobot,
         textRobot,
         imageRobot,
         videoRobot,

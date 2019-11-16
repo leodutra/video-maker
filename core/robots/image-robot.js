@@ -1,6 +1,6 @@
 const { URL } = require('url')
 const { trimToLower, rimraf, mkdirp } = require('../utils')
-const { allPromisesProgress } = require('../../apis/promise-progress')
+const { allPromisesProgress } = require('../progress/promise-progress')
 const { searchImages } = require('../../apis/google-customsearch')
 const { downloadImageToFs } = require('../../apis/http')
 const blacklistedImages = require('../../blacklist.json').images || []

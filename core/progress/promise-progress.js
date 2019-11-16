@@ -1,5 +1,5 @@
 const R = require('ramda')
-const { promiseAll } = require('../core/utils')
+const { promiseAll } = require('../utils')
 const cliProgress = require('./cli-progress')
 
 const progressInfo = x =>

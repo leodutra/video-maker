@@ -1,10 +1,10 @@
 const { searchPagesByApi } = require('../../apis/wikipedia')
 const { classifyImage } = require('../../apis/watson-visual-recognition')
 const { WikipediaApi } = require('../../apis/wikipedia')
-const prefixes = require('../input/prefixes')
-const Language = require('../input/Language')
-const { SuggestionService, suggestSearchTerms } = require('../input/suggestions')
-const { askOption, askText } = require('../input/cli')
+const prefixes = require('../lib/input/prefixes')
+const Language = require('../lib/input/Language')
+const { SuggestionService, suggestSearchTerms } = require('../lib/input/suggestions')
+const { askOption, askText } = require('../lib/input/cli')
 
 const MAX_SUGGESTION_COUNT = 15
 

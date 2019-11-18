@@ -1,5 +1,5 @@
-const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('../../apis/google-trends')
-const { getImbdTrends } = require('../../apis/imdb')
+const { getGoogleTrendsFromRss, getGoogleTrendsFromApi } = require('../../../apis/google-trends')
+const { getImbdTrends } = require('../../../apis/imdb')
 
 const SuggestionService = Object.freeze({
     GOOGLE_TRENDS_API: 'Google Trends(API)',

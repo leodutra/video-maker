@@ -1,7 +1,7 @@
 const algorithmia = require('algorithmia')
 const got = require('got')
 const jsonpath = require('jsonpath')
-const { allPromisesProgress } = require('../core/progress/promise-progress')
+const { allPromisesProgress } = require('../core/lib/progress/promise-progress')
 
 const WikipediaApi = Object.freeze({
     HTTP: 'HTTP query API',

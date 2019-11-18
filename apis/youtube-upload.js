@@ -36,9 +36,9 @@ class OAuthConsentServer {
     }
 }
 
-async function authenticateWithOAuth() {
-    const consentServer = new OAuthConsentServer() 
-    await consentServer.start()
+async function authenticateWithOAuth({ port, logger } = {}) {
+    const consentServer = new OAuthConsentServer({ logger }) 
+    await consentServer.start(port)
     const OAuthClient = await createOAuthClient()
     requestUserConsent(OAuthClient)
     const authorizationToken = await consentServer.waitForGoogleCallback()
